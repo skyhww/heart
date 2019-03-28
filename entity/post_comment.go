@@ -9,5 +9,5 @@ type PostComment struct {
 	Enable     int        `db:"enable"`
 	Content    []byte     `db:"content"`
 	PostId     int        `db:"post_id"`
-	ReplyId   int        `db:"reply_id"`
+	ReplyId    int        `db:"reply_id"`
 }

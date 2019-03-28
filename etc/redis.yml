@@ -1,0 +1,4 @@
+url: redis://10.251.246.135:6379
+auth: oAXHaadkf3009sfdf
+max_idle: 3
+idle_time_out_seconds: 60
