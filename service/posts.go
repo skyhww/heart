@@ -4,14 +4,16 @@ import (
 	"heart/entity"
 	"time"
 )
-type Post struct {
 
+type Post struct {
 }
 
 type PostService interface {
 	GetComments() *Comment
-	GetUser() User
+	GetUser() *User
 	GetCreateTime() *time.Time
+	//添加评论
+	AddComment(user *User, comment Comment)
 }
 
 type Comment struct {

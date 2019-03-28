@@ -47,3 +47,5 @@ type UserService interface {
 	//收藏帖子
 	Collect(post *Post) bool
 }
+
+
