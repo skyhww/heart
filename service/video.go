@@ -1,5 +1,7 @@
 package service
 
-type Video struct {
+import "heart/entity"
 
+type Video struct {
+	entity.UserVideo
 }

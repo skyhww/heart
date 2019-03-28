@@ -6,6 +6,7 @@ import (
 )
 
 type Post struct {
+	entity.UserPost
 }
 
 type PostService interface {
@@ -17,6 +18,6 @@ type PostService interface {
 }
 
 type Comment struct {
-	comment *entity.PostComment
+	entity.PostComment
 	reply   []Comment
 }

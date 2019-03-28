@@ -2,31 +2,16 @@ package service
 
 import (
 	"heart/entity"
-	"time"
 )
 
 type User struct {
-	entity *entity.User
+	 entity.User
 }
 
-func (user *User) GetId() int {
-	return user.entity.Id
-}
-func (user *User) GetName() string {
-	return user.entity.Name
-}
 func (user *User) GetIcon() []byte {
 	return nil
 }
-func (user *User) GetSignature() []byte {
-	return nil
-}
-func (user *User) GetCreateTime() *time.Time {
-	return user.entity.CreateTime
-}
-func (user *User) GetMobile() string {
-	return user.entity.Mobile
-}
+
 
 type UserService interface {
 	GetExtraInfo() *entity.UserExtraInfo
