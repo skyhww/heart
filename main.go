@@ -10,7 +10,9 @@ import (
 )
 
 func main() {
-	beego.Router("/token", &controller.Token{})
+	ns:=beego.NewNamespace("/v1.0")
+	ns.Router("/token", &controller.Token{})
+	ns.Router("/sms",&controller.SmsController{})
 	beego.Run()
 }
 

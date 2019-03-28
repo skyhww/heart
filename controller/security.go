@@ -25,7 +25,13 @@ var PassWordLengthNotEnough = &service.Info{"000001", "密码长度必须大于6
 var RequestDataRequired = &service.Info{"000002", "上送的数据为空"}
 var PasswordRequired = &service.Info{"000003", "密码不能为空"}
 
-func (loginInput *LoginInput) validatePassword() (*service.Info) {
+func (loginInput *LoginInput) validateLoginPassword() (*service.Info) {
+	if len(loginInput.Password) == 0 {
+		return PasswordRequired
+	}
+	return service.Success
+}
+func (loginInput *LoginInput) validateRegistPassword() (*service.Info) {
 	if len(loginInput.Password) == 0 {
 		return PasswordRequired
 	}
@@ -40,14 +46,22 @@ func (token *Token) Post() {
 	defer token.ServeJSON()
 	input := &LoginInput{}
 	token.ParseForm(input)
-	info := input.validatePassword()
+	info := input.validateLoginPassword()
 	if !info.IsSuccess() {
 		token.Data["json"] = info
 		return
 	}
-	info = token.service.Regist(&service.Token{Token: input.Token}, input.Mobile, input.Password, input.SmsCode)
+	info = token.service.Login(&service.Token{Token: input.Token}, input.Mobile, input.Password)
 	if !info.IsSuccess() {
 		token.Data["json"] = info
 		return
 	}
+}
+
+type SmsController struct {
+	beego.Controller
+}
+
+func (sms *SmsController) Get() {
+
 }
