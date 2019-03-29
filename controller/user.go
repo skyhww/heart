@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/astaxie/beego"
 	"heart/service"
+	"heart/service/common"
 )
 
 type User struct {
@@ -12,7 +13,7 @@ type User struct {
 
 //注册
 func (user *User) Put() {
-	info := service.Success
+	info := base.Success
 	defer func() {
 		user.Data["json"] = info
 		user.ServeJSON()

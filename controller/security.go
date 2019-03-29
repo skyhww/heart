@@ -5,6 +5,7 @@ import (
 	"heart/service"
 	"heart/helper"
 	"heart/controller/common"
+	"heart/service/common"
 )
 
 type Token struct {
@@ -20,33 +21,33 @@ type PassInput struct {
 	SmsCode         string `form:"smsCode" valid:"Required;Length(6)"`
 }
 
-func (loginInput *PassInput) validateLoginPassword() (*service.Info) {
+func (loginInput *PassInput) validateLoginPassword() (*base.Info) {
 	if len(loginInput.Password) == 0 {
 		return common.PasswordRequired
 	}
-	return service.Success
+	return base.Success
 }
-func (loginInput *PassInput) validateMobile() (*service.Info) {
+func (loginInput *PassInput) validateMobile() (*base.Info) {
 	if len(loginInput.Mobile) == 0 {
 		return common.MobileRequired
 	}
 	if !helper.MobileRegexp.MatchString(loginInput.Mobile) {
 		return common.IllegalMobileFormat
 	}
-	return service.Success
+	return base.Success
 }
 
-func (loginInput *PassInput) validateSmsCode() (*service.Info) {
+func (loginInput *PassInput) validateSmsCode() (*base.Info) {
 	if len(loginInput.SmsCode) == 0 {
 		return common.SmsCodeRequired
 	}
 	if !helper.SmsCodeRegexp.MatchString(loginInput.SmsCode) {
 		return common.IllegalSmsCodeFormat
 	}
-	return service.Success
+	return base.Success
 }
 
-func (loginInput *PassInput) validateRegistPassword() (*service.Info) {
+func (loginInput *PassInput) validateRegistPassword() (*base.Info) {
 	if len(loginInput.Password) == 0 {
 		return common.PasswordRequired
 	}
@@ -56,12 +57,12 @@ func (loginInput *PassInput) validateRegistPassword() (*service.Info) {
 	if loginInput.Password != loginInput.ConfirmPassword {
 		return common.ConfirmPasswordNotMatched
 	}
-	return service.Success
+	return base.Success
 }
 
 //登录
 func (token *Token) Get() {
-	info := service.Success
+	info := base.Success
 	defer func() {
 		token.Data["json"] = info
 		token.ServeJSON()
@@ -83,7 +84,7 @@ type SmsController struct {
 }
 
 func (sms *SmsController) Get() {
-	info := service.Success
+	info := base.Success
 	defer func() {
 		sms.Data["json"] = info
 		sms.ServeJSON()
