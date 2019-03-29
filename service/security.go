@@ -5,7 +5,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"heart/sms"
 	"heart/helper"
-	"github.com/jmoiron/sqlx"
+	"heart/entity"
 )
 
 //全局唯一
@@ -25,7 +25,7 @@ type TokenService interface {
 }
 type Security interface {
 	Login(token *Token, mobile, password string) *Info
-	SendSmsCode(token *Token, mobile, smsCode, use string) *Info
+	SendSmsCode(mobile string) *Info
 	Regist(token *Token, mobile, password, smsCode string) *Info
 }
 
@@ -35,21 +35,21 @@ var SmsExpired = &Info{Code: "000102", Message: "短信验证码已经过期"}
 var SmsNotMatched = &Info{Code: "000103", Message: "短信验证码匹配失败"}
 
 type SimpleSecurity struct {
-	pool      *redis.Pool
-	smsClient sms.Sms
-	db *sqlx.DB
+	Pool        *redis.Pool
+	SmsClient   sms.Sms
+	UserPersist entity.UserPersist
 }
 
 func (security *SimpleSecurity) Login(token *Token, mobile, password string) *Info {
 	return Success
 }
-func (security *SimpleSecurity) SendSmsCode(token *Token, mobile, smsCode, use string) *Info {
+func (security *SimpleSecurity) SendSmsCode( mobile string) *Info {
 	code := helper.CreateCaptcha()
-	_, err := security.pool.Get().Do("setnx", use+"_"+token.Token, code, "EX", 60)
+	_, err := security.Pool.Get().Do("setnx", "regist_"+mobile, code, "EX", 60)
 	if err != nil {
 		return SmsSendFailure
 	}
-	b := security.smsClient.SendSmsCode(mobile, smsCode)
+	b := security.SmsClient.SendSmsCode(mobile, code)
 	if !b {
 		return SmsSendFailure
 	}
@@ -57,7 +57,7 @@ func (security *SimpleSecurity) SendSmsCode(token *Token, mobile, smsCode, use s
 
 }
 func (security *SimpleSecurity) Regist(token *Token, mobile, password, smsCode string) *Info {
-	code, err := security.pool.Get().Do("get", "regist_"+mobile)
+	code, err := security.Pool.Get().Do("get", "regist_"+mobile)
 	if err != nil {
 		return SmsFindFailure
 	}
@@ -67,6 +67,10 @@ func (security *SimpleSecurity) Regist(token *Token, mobile, password, smsCode s
 	if code.(string) != smsCode {
 		return SmsNotMatched
 	}
-	security
+	now := time.Now()
+	user := &entity.User{Name: helper.Random(8), CreateTime: &now, Mobile: mobile, Password: password}
+	if security.UserPersist.Save(user) {
+		return NewSuccess(user)
+	}
 	return Success
 }

@@ -20,11 +20,15 @@ type Info struct {
 
 var Success = &Info{Code: "000000", Message: ""}
 
+func NewSuccess(data interface{}) *Info {
+	return &Info{Success.Code, Success.Message, data}
+}
+
 func (e *Info) toJsonString() string {
 	b, _ := JSON.Marshal(e)
 	return string(b)
 }
 
 func (e *Info) IsSuccess() bool {
-	return e == Success
+	return e.Code == Success.Code
 }

@@ -8,7 +8,7 @@ import (
 
 type Token struct {
 	beego.Controller
-	service service.Security
+	Service service.Security
 }
 
 func (token *Token) Get() {
@@ -30,10 +30,20 @@ var IllegalMobileFormat = &service.Info{Code: "000004", Message: "手机号非�
 var ConfirmPasswordNotMatched = &service.Info{Code: "000005", Message: "确认密码不匹配"}
 var SmsCodeRequired = &service.Info{Code: "000006", Message: "短信验证码不能为空"}
 var IllegalSmsCodeFormat = &service.Info{Code: "000008", Message: "短信验证码格式不正确"}
+var MobileRequired = &service.Info{Code: "000009", Message: "短信验证码格式不正确"}
 
 func (loginInput *PassInput) validateLoginPassword() (*service.Info) {
 	if len(loginInput.Password) == 0 {
 		return PasswordRequired
+	}
+	return service.Success
+}
+func (loginInput *PassInput) validateMobile() (*service.Info) {
+	if len(loginInput.Mobile) == 0 {
+		return MobileRequired
+	}
+	if !helper.MobileRegexp.MatchString(loginInput.Mobile) {
+		return IllegalMobileFormat
 	}
 	return service.Success
 }
@@ -71,7 +81,7 @@ func (token *Token) Post() {
 		token.Data["json"] = info
 		return
 	}
-	info = token.service.Login(&service.Token{Token: input.Token}, input.Mobile, input.Password)
+	info = token.Service.Login(&service.Token{Token: input.Token}, input.Mobile, input.Password)
 	if !info.IsSuccess() {
 		token.Data["json"] = info
 		return
@@ -92,18 +102,24 @@ func (token *Token) Put() {
 	if !info.IsSuccess() {
 		return
 	}
-	info = token.service.Regist(nil, passInput.Mobile, passInput.Password, passInput.SmsCode)
+	info = token.Service.Regist(nil, passInput.Mobile, passInput.Password, passInput.SmsCode)
 }
 
 type SmsController struct {
 	beego.Controller
+	Security service.Security
 }
 
 func (sms *SmsController) Get() {
-	defer sms.ServeJSON()
-	mobile := sms.Ctx.Input.Param(":mobile")
-	if !helper.MobileRegexp.MatchString(mobile) {
-		sms.Data["json"] = IllegalMobileFormat
+	info := service.Success
+	defer func() {
+		sms.Data["json"] = info
+		sms.ServeJSON()
+	}()
+	in := &PassInput{Mobile: sms.Ctx.Input.Param(":mobile")}
+	info = in.validateMobile()
+	if !info.IsSuccess() {
+		return
 	}
-
+	info = sms.Security.SendSmsCode(in.Mobile)
 }

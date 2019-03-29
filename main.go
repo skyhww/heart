@@ -10,19 +10,27 @@ import (
 	"heart/sms"
 	"github.com/jmoiron/sqlx"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
+	"heart/service"
+	"heart/entity"
 )
 
 func main() {
 	//读取配置文件
 	cfg := loadConfig()
 	//加载配置  阿里云、redis、数据库
-	loadAliyun(cfg.AliYunConfig)
-	loadRedis(cfg.RedisConfig)
-	loadDatabase(cfg.DatabaseConfig)
-
+	aliYun := loadAliyun(cfg.AliYunConfig)
+	redisPool := loadRedis(cfg.RedisConfig)
+	db := loadDatabase(cfg.DatabaseConfig)
+	//service
+	service := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: entity.NewUserPersist(db)}
+	//SmsController
+	smsController := &controller.SmsController{}
+	smsController.Security = service
+	//Token
+	token := &controller.Token{Service: service}
 	//beego运行
 	ns := beego.NewNamespace("/v1.0")
-	ns.Router("/token", &controller.Token{})
+	ns.Router("/token", token)
 	ns.Router("/sms/:mobile", &controller.SmsController{})
 	beego.Run()
 }
