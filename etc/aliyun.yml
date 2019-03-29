@@ -1,0 +1,13 @@
+access_key_id: LTAIZa0kaUxg6uZA
+access_key_secret: JHROnLb3gxZec272PiduVsRO7I0TUr
+region_id: default
+sms:
+   send_sms_code:
+      code: SMS_162520135
+      method: POST
+      scheme:  https
+      sign_name:
+      template_code:
+      domain: dysmsapi.aliyuncs.com
+      version: 2017-05-25
+      api_name: SendSms

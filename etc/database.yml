@@ -1,0 +1,5 @@
+driver: mysql
+dsn: root:haohaoxuexi@tcp(10.80.110.52:3306)/heart?charset=utf8
+conn_max_lifetime_seconds: 3600
+max_idle_conns: 3
+max_open_conns: 10

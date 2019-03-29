@@ -7,35 +7,49 @@ import (
 	"time"
 	"errors"
 	"heart/cfg"
+	_ "github.com/go-sql-driver/mysql"
+	"heart/sms"
+	"github.com/jmoiron/sqlx"
 )
 
 func main() {
-	ns:=beego.NewNamespace("/v1.0")
+	ns := beego.NewNamespace("/v1.0")
 	ns.Router("/token", &controller.Token{})
-	ns.Router("/sms",&controller.SmsController{})
+	ns.Router("/sms", &controller.SmsController{})
 	beego.Run()
 }
-
-var redisPool *redis.Pool
 
 func init() {
 	cfg := loadConfig()
 	if cfg == nil {
 		panic(errors.New("加载配置文件失败！"))
 	}
-	//loadRedis
-	loadRedis(cfg.RedisConfig)
-
 }
 
 func loadConfig() *cfg.Config {
-	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}}
+	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}}
 	cfg.LoadYaml("etc/redis.yml", c.RedisConfig)
+	cfg.LoadYaml("etc/aliyun.yml", &cfg.AliYunConfig{})
+	cfg.LoadYaml("etc/database.yml", &cfg.DatabaseConfig{})
 	return c
 }
 
-func loadRedis(redisConfig *cfg.RedisConfig) {
-	redisPool = &redis.Pool{
+func loadAliyun(aliYunConfig *cfg.AliYunConfig) *sms.AliYun {
+	return &sms.AliYun{AccessKeyId: aliYunConfig.AccessKeyId, AccessKeySecret: aliYunConfig.AccessKeySecret}
+}
+
+func loadDatabase(databaseConfig *cfg.DatabaseConfig) *sqlx.DB {
+	db, err := sqlx.Open(databaseConfig.Driver, databaseConfig.Dsn)
+	if err != nil {
+		panic(err)
+	}
+	db.SetMaxOpenConns(databaseConfig.MaxOpenConns)
+	db.SetMaxIdleConns(databaseConfig.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(databaseConfig.ConnMaxLifetimeSeconds) * time.Second)
+	return db
+}
+func loadRedis(redisConfig *cfg.RedisConfig) *redis.Pool {
+	return &redis.Pool{
 		MaxIdle:     redisConfig.MaxIdle,
 		IdleTimeout: time.Duration(redisConfig.IdleTimeOutSeconds) * time.Second,
 		Dial: func() (redis.Conn, error) {

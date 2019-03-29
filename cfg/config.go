@@ -5,17 +5,14 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type RedisConfig struct {
-	Url                string `yaml:"url"`
-	Auth               string `yaml:"auth"`
-	MaxIdle            int    `yaml:"max_idle"`
-	IdleTimeOutSeconds int    `yaml:"idle_time_out_seconds"`
-}
-
 type Config struct {
-	RedisConfig *RedisConfig
+	RedisConfig    *RedisConfig
+	AliYunConfig   *AliYunConfig
+	DatabaseConfig *DatabaseConfig
 }
 
+//file: location
+//r: decode config
 func LoadYaml(file string, r interface{}) {
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
