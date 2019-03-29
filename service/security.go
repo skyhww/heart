@@ -5,6 +5,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"heart/sms"
 	"heart/helper"
+	"github.com/jmoiron/sqlx"
 )
 
 //全局唯一
@@ -36,6 +37,7 @@ var SmsNotMatched = &Info{Code: "000103", Message: "短信验证码匹配失败"
 type SimpleSecurity struct {
 	pool      *redis.Pool
 	smsClient sms.Sms
+	db *sqlx.DB
 }
 
 func (security *SimpleSecurity) Login(token *Token, mobile, password string) *Info {
@@ -55,7 +57,7 @@ func (security *SimpleSecurity) SendSmsCode(token *Token, mobile, smsCode, use s
 
 }
 func (security *SimpleSecurity) Regist(token *Token, mobile, password, smsCode string) *Info {
-	code, err := security.pool.Get().Do("get", "loginSms_"+token.Token)
+	code, err := security.pool.Get().Do("get", "regist_"+mobile)
 	if err != nil {
 		return SmsFindFailure
 	}
@@ -65,5 +67,6 @@ func (security *SimpleSecurity) Regist(token *Token, mobile, password, smsCode s
 	if code.(string) != smsCode {
 		return SmsNotMatched
 	}
+	security
 	return Success
 }

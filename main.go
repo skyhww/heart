@@ -5,7 +5,6 @@ import (
 	"heart/controller"
 	"github.com/garyburd/redigo/redis"
 	"time"
-	"errors"
 	"heart/cfg"
 	_ "github.com/go-sql-driver/mysql"
 	"heart/sms"
@@ -14,19 +13,18 @@ import (
 )
 
 func main() {
-	//
+	//读取配置文件
+	cfg := loadConfig()
+	//加载配置  阿里云、redis、数据库
+	loadAliyun(cfg.AliYunConfig)
+	loadRedis(cfg.RedisConfig)
+	loadDatabase(cfg.DatabaseConfig)
 
+	//beego运行
 	ns := beego.NewNamespace("/v1.0")
 	ns.Router("/token", &controller.Token{})
 	ns.Router("/sms/:mobile", &controller.SmsController{})
 	beego.Run()
-}
-
-func init() {
-	cfg := loadConfig()
-	if cfg == nil {
-		panic(errors.New("加载配置文件失败！"))
-	}
 }
 
 func loadConfig() *cfg.Config {

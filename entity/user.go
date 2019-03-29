@@ -1,6 +1,9 @@
 package entity
 
-import "time"
+import (
+	"time"
+	"github.com/jmoiron/sqlx"
+)
 
 type User struct {
 	Id         int        `db:"id" json:"id"`
@@ -15,4 +18,18 @@ type User struct {
 type UserPersist interface {
 	Save(user *User)
 	Get(id int) *User
+}
+
+type UserDao struct {
+	db *sqlx.DB
+}
+
+func NewUserPersist(db *sqlx.DB) UserPersist {
+	return &UserDao{db: db}
+}
+func (userDao *UserDao) Save(user *User) {
+	userDao.db.BeginTx()
+}
+func (userDao *UserDao) Get(id int) *User {
+
 }
