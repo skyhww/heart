@@ -13,11 +13,11 @@ type User struct {
 	CreateTime *time.Time `db:"create_time" json:"create_time"`
 	Mobile     string     `db:"mobile" json:"mobile"`
 	Enable     int        `db:"enable" json:"enable"`
-	Password   string     `db:"password" json:"password"`
+	Password   string     `db:"password" json:"-"`
 }
 type UserPersist interface {
 	Save(user *User) bool
-	Get(id int64) *User
+	Get(mobile string) (*User, error)
 }
 
 type UserDao struct {
@@ -41,6 +41,8 @@ func (userDao *UserDao) Save(user *User) bool {
 	user.Id = id
 	return true
 }
-func (userDao *UserDao) Get(id int64) *User {
-	return nil
+func (userDao *UserDao) Get(mobile string) (*User, error) {
+	user := &User{}
+	err := userDao.db.Get(user, "select id,name,icon_url,create_time from user where mobile=$1 ", mobile)
+	return user, err
 }

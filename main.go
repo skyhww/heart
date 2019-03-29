@@ -28,10 +28,13 @@ func main() {
 	smsController.Security = service
 	//Token
 	token := &controller.Token{Service: service}
+	//user
+	userController := &controller.User{Service: service}
 	//beego运行
 	ns := beego.NewNamespace("/v1.0")
 	ns.Router("/token", token)
-	ns.Router("/sms/:mobile", &controller.SmsController{})
+	ns.Router("/sms/:mobile", smsController)
+	ns.Router("/user", userController)
 	beego.Run()
 }
 
