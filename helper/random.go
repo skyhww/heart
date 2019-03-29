@@ -1,4 +1,4 @@
-package math_helper
+package helper
 
 import (
 	"fmt"

@@ -4,7 +4,7 @@ import (
 	"time"
 	"github.com/garyburd/redigo/redis"
 	"heart/sms"
-	"heart/math"
+	"heart/helper"
 )
 
 //全局唯一
@@ -28,10 +28,10 @@ type Security interface {
 	Regist(token *Token, mobile, password, smsCode string) *Info
 }
 
-var SmsSendFailure = &Info{"000100", "短信验证码发送失败"}
-var SmsFindFailure = &Info{"000101", "短信验证异常"}
-var SmsExpired = &Info{"000102", "短信验证码已经过期"}
-var SmsNotMatched = &Info{"000103", "短信验证码匹配失败"}
+var SmsSendFailure = &Info{Code: "000100", Message: "短信验证码发送失败"}
+var SmsFindFailure = &Info{Code: "000101", Message: "短信验证异常"}
+var SmsExpired = &Info{Code: "000102", Message: "短信验证码已经过期"}
+var SmsNotMatched = &Info{Code: "000103", Message: "短信验证码匹配失败"}
 
 type SimpleSecurity struct {
 	pool      *redis.Pool
@@ -42,12 +42,12 @@ func (security *SimpleSecurity) Login(token *Token, mobile, password string) *In
 	return Success
 }
 func (security *SimpleSecurity) SendSmsCode(token *Token, mobile, smsCode, use string) *Info {
-	code := math_helper.CreateCaptcha()
+	code := helper.CreateCaptcha()
 	_, err := security.pool.Get().Do("setnx", use+"_"+token.Token, code, "EX", 60)
 	if err != nil {
 		return SmsSendFailure
 	}
-	b := security.smsClient.Send(mobile, smsCode)
+	b := security.smsClient.SendSmsCode(mobile, smsCode)
 	if !b {
 		return SmsSendFailure
 	}

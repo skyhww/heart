@@ -13,11 +13,12 @@ type Page struct {
 }
 
 type Info struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code    string      `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
-var Success = &Info{"000000", ""}
+var Success = &Info{Code: "000000", Message: ""}
 
 func (e *Info) toJsonString() string {
 	b, _ := JSON.Marshal(e)

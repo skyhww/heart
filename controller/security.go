@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/astaxie/beego"
 	"heart/service"
+	"heart/helper"
 )
 
 type Token struct {
@@ -21,9 +22,10 @@ type LoginInput struct {
 	SmsCode  string `form:"smsCode" valid:"Required;Length(6)"`
 }
 
-var PassWordLengthNotEnough = &service.Info{"000001", "密码长度必须大于6"}
-var RequestDataRequired = &service.Info{"000002", "上送的数据为空"}
-var PasswordRequired = &service.Info{"000003", "密码不能为空"}
+var PassWordLengthNotEnough = &service.Info{Code: "000001", Message: "密码长度必须大于6"}
+var RequestDataRequired = &service.Info{Code: "000002", Message: "上送的数据为空"}
+var PasswordRequired = &service.Info{Code: "000003", Message: "密码不能为空"}
+var IllegalMobileFormat = &service.Info{Code: "000004", Message: "手机号非法"}
 
 func (loginInput *LoginInput) validateLoginPassword() (*service.Info) {
 	if len(loginInput.Password) == 0 {
@@ -63,5 +65,10 @@ type SmsController struct {
 }
 
 func (sms *SmsController) Get() {
+	defer sms.ServeJSON()
+	mobile := sms.Ctx.Input.Param(":mobile")
+	if !helper.MobileRegexp.MatchString(mobile) {
+		sms.Data["json"] = IllegalMobileFormat
+	}
 
 }

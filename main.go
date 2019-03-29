@@ -18,7 +18,7 @@ func main() {
 
 	ns := beego.NewNamespace("/v1.0")
 	ns.Router("/token", &controller.Token{})
-	ns.Router("/sms", &controller.SmsController{})
+	ns.Router("/sms/:mobile", &controller.SmsController{})
 	beego.Run()
 }
 
@@ -30,10 +30,10 @@ func init() {
 }
 
 func loadConfig() *cfg.Config {
-	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}}
+	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{}}
 	cfg.LoadYaml("etc/redis.yml", c.RedisConfig)
-	cfg.LoadYaml("etc/aliyun.yml", &cfg.AliYunConfig{})
-	cfg.LoadYaml("etc/database.yml", &cfg.DatabaseConfig{})
+	cfg.LoadYaml("etc/aliyun.yml", c.AliYunConfig)
+	cfg.LoadYaml("etc/database.yml", c.DatabaseConfig)
 	return c
 }
 
