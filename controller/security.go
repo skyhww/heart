@@ -8,6 +8,7 @@ import (
 	"heart/service/common"
 )
 
+
 type Token struct {
 	beego.Controller
 	Service service.Security
@@ -96,3 +97,5 @@ func (sms *SmsController) Get() {
 	}
 	info = sms.Security.SendSmsCode(in.Mobile)
 }
+
+

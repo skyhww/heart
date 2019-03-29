@@ -1,9 +1,16 @@
 package base
 
-import JSON "encoding/json"
+import (
+	JSON "encoding/json"
+)
 
 type Json interface {
 	toJsonString() string
+}
+
+type ByteChan struct {
+	Content []byte
+	Last    bool
 }
 
 type Page struct {
@@ -30,7 +37,7 @@ func (e *Info) toJsonString() string {
 }
 
 func (e *Info) IsSuccess() bool {
-	return e.Code == Success.Code
+	return e == Success || e.Code == Success.Code
 }
 
 var SmsSendFailure = &Info{Code: "000100", Message: "短信验证码发送失败"}
@@ -41,3 +48,4 @@ var GetUserInfoFailed = &Info{Code: "000104", Message: "获取用户信息失败
 var NonSignedUser = &Info{Code: "000105", Message: "用户未注册"}
 var UsernameOrPasswordError = &Info{Code: "000106", Message: "用户名或密码错误"}
 var SaveUserFailed = &Info{Code: "000107", Message: "保存用户失败"}
+var ServerError = &Info{Code: "000108", Message: "服务器繁忙"}

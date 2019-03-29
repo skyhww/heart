@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	beego.Controller
-	Service service.Security
+	Service      service.Security
 }
 
 //注册
