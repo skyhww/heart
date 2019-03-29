@@ -10,9 +10,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"heart/sms"
 	"github.com/jmoiron/sqlx"
+	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
 )
 
 func main() {
+	//
+
 	ns := beego.NewNamespace("/v1.0")
 	ns.Router("/token", &controller.Token{})
 	ns.Router("/sms", &controller.SmsController{})
@@ -35,7 +38,11 @@ func loadConfig() *cfg.Config {
 }
 
 func loadAliyun(aliYunConfig *cfg.AliYunConfig) *sms.AliYun {
-	return &sms.AliYun{AccessKeyId: aliYunConfig.AccessKeyId, AccessKeySecret: aliYunConfig.AccessKeySecret}
+	client, err := sdk.NewClientWithAccessKey(aliYunConfig.RegionId, aliYunConfig.AccessKeyId, aliYunConfig.AccessKeySecret)
+	if err != nil {
+		panic(err)
+	}
+	return &sms.AliYun{AliYunConfig: aliYunConfig, Client: client}
 }
 
 func loadDatabase(databaseConfig *cfg.DatabaseConfig) *sqlx.DB {
