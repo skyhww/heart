@@ -12,6 +12,8 @@ type StoreService interface {
 	Save(nameSpace string, content []byte) (string, error)
 	//根据文件标示符，获取实际位置
 	Get(nameSpace string, id string) []byte
+	//存储方式，type唯一
+	GetType() string
 }
 
 //单节点生效，多节点不采用此方式
@@ -46,4 +48,8 @@ func (localStoreService *LocalStoreService) Get(nameSpace string, id string) []b
 		return nil
 	}
 	return b
+}
+
+func (localStoreService *LocalStoreService) GetType() string {
+	return "LOCAL"
 }

@@ -72,7 +72,8 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 	if user.Id == 0 {
 		return base.UsernameOrPasswordError
 	}
-	psd := string(md5.Sum([]byte(password))[:])
+	b:=md5.Sum([]byte(password))
+	psd := string(b[:])
 	if psd != user.Password {
 		return base.UsernameOrPasswordError
 	}

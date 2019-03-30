@@ -29,7 +29,7 @@ func NewUserPersist(db *sqlx.DB) UserPersist {
 }
 func (userDao *UserDao) Save(user *User) bool {
 	tx := userDao.db.MustBegin()
-	r, err := tx.NamedExec("INSERT INTO user (name, mobile,password,create_time) VALUES (:name, , :mobile, :password,create_time)", user)
+	r, err := tx.NamedExec("INSERT INTO user (name, mobile,password,create_time) VALUES (:name , :mobile, :password,:create_time)", user)
 	if err != nil {
 		return false
 	}

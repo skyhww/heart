@@ -12,3 +12,4 @@ var ConfirmPasswordNotMatched = &base.Info{Code: "000005", Message: "确认密�
 var SmsCodeRequired = &base.Info{Code: "000006", Message: "短信验证码不能为空"}
 var IllegalSmsCodeFormat = &base.Info{Code: "000008", Message: "短信验证码格式不正确"}
 var MobileRequired = &base.Info{Code: "000009", Message: "短信验证码格式不正确"}
+var UploadFailed = &base.Info{Code: "000010", Message: "上传失败"}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/astaxie/beego"
-	"heart/controller"
 	"github.com/garyburd/redigo/redis"
 	"time"
 	"heart/cfg"
@@ -10,12 +9,11 @@ import (
 	"heart/sms"
 	"github.com/jmoiron/sqlx"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
-	"heart/service"
-	"heart/entity"
+	"heart/controller"
 )
 
 func main() {
-	//读取配置文件
+	/*//读取配置文件
 	cfg := loadConfig()
 	//加载配置  阿里云、redis、数据库
 	aliYun := loadAliyun(cfg.AliYunConfig)
@@ -29,13 +27,15 @@ func main() {
 	//Token
 	token := &controller.Token{Service: service}
 	//user
-	userController := &controller.User{Service: service}
+	userController := &controller.User{Service: service}*/
 	//beego运行
-	ns := beego.NewNamespace("/v1.0")
-	ns.Router("/token", token)
+	//ns := beego.NewNamespace("/v1.0")
+	/*ns.Router("/token", token)
 	ns.Router("/sms/:mobile", smsController)
-	ns.Router("/user", userController)
-	beego.Run()
+	ns.Router("/user", userController)*/
+	beego.Router("/nn",&controller.NN{})
+
+	beego.Run("127.0.0.1:8080")
 }
 
 func loadConfig() *cfg.Config {
