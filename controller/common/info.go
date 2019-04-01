@@ -13,3 +13,6 @@ var SmsCodeRequired = &base.Info{Code: "000006", Message: "短信验证码不能
 var IllegalSmsCodeFormat = &base.Info{Code: "000008", Message: "短信验证码格式不正确"}
 var MobileRequired = &base.Info{Code: "000009", Message: "短信验证码格式不正确"}
 var UploadFailed = &base.Info{Code: "000010", Message: "上传失败"}
+var ReLogin = &base.Info{Code: "000011", Message: "请重新登录"}
+var IllegalRequest = &base.Info{Code: "000012", Message: "读取数据异常"}
+var IllegalRequestDataFormat = &base.Info{Code: "000013", Message: "数据格式异常"}

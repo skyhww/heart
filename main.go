@@ -1,3 +1,7 @@
+// @APIVersion 1.0.0
+// @Title mobile API
+// @Description mobile has every tool to get any job done, so codename for the new mobile APIs.
+// @Contact astaxie@gmail.com
 package main
 
 import (
@@ -9,40 +13,45 @@ import (
 	"heart/sms"
 	"github.com/jmoiron/sqlx"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
+	"heart/service"
+	"heart/entity"
 	"heart/controller"
+	"heart/controller/common"
 )
 
 func main() {
-	/*//读取配置文件
+	//读取配置文件
 	cfg := loadConfig()
 	//加载配置  阿里云、redis、数据库
 	aliYun := loadAliyun(cfg.AliYunConfig)
 	redisPool := loadRedis(cfg.RedisConfig)
 	db := loadDatabase(cfg.DatabaseConfig)
-	//service
-	service := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: entity.NewUserPersist(db)}
+	//security
+	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: entity.NewUserPersist(db)}
 	//SmsController
 	smsController := &controller.SmsController{}
-	smsController.Security = service
+	smsController.Security = security
+	//helper
+	tokenHelper:=&service.TokenHelper{Rds:redisPool}
 	//Token
-	token := &controller.Token{Service: service}
+	token := &controller.Token{Service: security}
+	tokenHolder:=&common.TokenHolder{Name:"token",Helper:tokenHelper}
 	//user
-	userController := &controller.User{Service: service}*/
+	userController := &controller.User{Service: security,TokenHolder:tokenHolder}
 	//beego运行
-	//ns := beego.NewNamespace("/v1.0")
-	/*ns.Router("/token", token)
+	ns := beego.NewNamespace("/heart/v1.0")
+	ns.Router("/token", token)
 	ns.Router("/sms/:mobile", smsController)
-	ns.Router("/user", userController)*/
-	beego.Router("/nn",&controller.NN{})
-
-	beego.Run("127.0.0.1:8080")
+	ns.Router("/user", userController)
+	beego.AddNamespace(ns)
+	beego.Run()
 }
 
 func loadConfig() *cfg.Config {
 	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{}}
-	cfg.LoadYaml("etc/redis.yml", c.RedisConfig)
-	cfg.LoadYaml("etc/aliyun.yml", c.AliYunConfig)
-	cfg.LoadYaml("etc/database.yml", c.DatabaseConfig)
+	cfg.LoadYaml("conf/redis.yml", c.RedisConfig)
+	cfg.LoadYaml("conf/aliyun.yml", c.AliYunConfig)
+	cfg.LoadYaml("conf/database.yml", c.DatabaseConfig)
 	return c
 }
 

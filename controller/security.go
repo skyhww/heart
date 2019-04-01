@@ -8,18 +8,18 @@ import (
 	"heart/service/common"
 )
 
-
 type Token struct {
 	beego.Controller
-	Service service.Security
+	Service     service.Security
+	TokenHolder *common.TokenHolder
 }
 
 type PassInput struct {
-	Token           string `form:"token" valid:"Required"`
-	Mobile          string `form:"mobile" valid:"Required;Mobile"`
-	Password        string `form:"password" valid:"Required;MinSize(6);MaxSize(20)"`
-	ConfirmPassword string `form:"confirm_password" valid:"Required;MinSize(6);MaxSize(20)"`
-	SmsCode         string `form:"smsCode" valid:"Required;Length(6)"`
+	Token           string `json:"token"`
+	Mobile          string `json:"mobile"`
+	Password        string `json:"password"`
+	ConfirmPassword string `json:"confirm_password"`
+	SmsCode         string `json:"sms_code"`
 }
 
 func (loginInput *PassInput) validateLoginPassword() (*base.Info) {
@@ -61,7 +61,7 @@ func (loginInput *PassInput) validateRegistPassword() (*base.Info) {
 	return base.Success
 }
 
-//登录
+
 func (token *Token) Get() {
 	info := base.Success
 	defer func() {
@@ -69,13 +69,31 @@ func (token *Token) Get() {
 		token.ServeJSON()
 	}()
 	passInput := &PassInput{Mobile: token.GetString("mobile"), Password: token.GetString("password")}
+	info =passInput.validateMobile()
+	if !info.IsSuccess() {
+		return
+	}
 	info = passInput.validateLoginPassword()
 	if !info.IsSuccess() {
 		return
 	}
 	info = token.Service.Login(passInput.Mobile, passInput.Password)
+	return
+}
+
+//登出
+func (token *Token) Delete() {
+	info := base.Success
+	defer func() {
+		token.Data["json"] = info
+		token.ServeJSON()
+	}()
+	t, info := token.TokenHolder.GetToken(&token.Controller)
 	if !info.IsSuccess() {
 		return
+	}
+	if t != nil {
+		info = token.Service.LogOut(t)
 	}
 }
 
@@ -97,5 +115,3 @@ func (sms *SmsController) Get() {
 	}
 	info = sms.Security.SendSmsCode(in.Mobile)
 }
-
-
