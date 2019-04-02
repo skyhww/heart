@@ -26,23 +26,36 @@ func main() {
 	aliYun := loadAliyun(cfg.AliYunConfig)
 	redisPool := loadRedis(cfg.RedisConfig)
 	db := loadDatabase(cfg.DatabaseConfig)
+
+	//helper
+	tokenHelper:=&service.TokenHelper{Rds:redisPool}
+	simpleTokenService:=&service.SimpleTokenService{Pool:redisPool,Ex: time.Second*60*60*3}
+	//persist
+	userPersist:=entity.NewUserPersist(db)
 	//security
-	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: entity.NewUserPersist(db)}
+	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist:userPersist,TokenService:simpleTokenService}
+	//service
+	storeService:= &service.LocalStoreService{Path:"store"}
+	userInfo:=&service.UserInfo{UserPersist:userPersist,StoreService:storeService}
 	//SmsController
 	smsController := &controller.SmsController{}
 	smsController.Security = security
-	//helper
-	tokenHelper:=&service.TokenHelper{Rds:redisPool}
 	//Token
 	token := &controller.Token{Service: security}
 	tokenHolder:=&common.TokenHolder{Name:"token",Helper:tokenHelper}
 	//user
 	userController := &controller.User{Service: security,TokenHolder:tokenHolder}
+	userName:=&controller.Name{TokenHolder:tokenHolder,UserInfo:userInfo}
+	signature:=&controller.Signature{TokenHolder:tokenHolder,UserInfo:userInfo}
+	icon:=&controller.Icon{TokenHolder:tokenHolder,UserInfo:userInfo,Limit:3}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
 	ns.Router("/token", token)
 	ns.Router("/sms/:mobile", smsController)
 	ns.Router("/user", userController)
+	ns.Router("/user/info/name",userName)
+	ns.Router("/user/info/signature",signature)
+	ns.Router("/user/info/icon",icon)
 	beego.AddNamespace(ns)
 	beego.Run()
 }

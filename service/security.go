@@ -10,6 +10,7 @@ import (
 	"heart/service/common"
 	"github.com/satori/go.uuid"
 	"github.com/astaxie/beego/logs"
+	"fmt"
 )
 
 //全局唯一
@@ -22,12 +23,15 @@ type TokenHelper struct {
 	Rds *redis.Pool
 }
 
-func (helper *TokenHelper) GetToken(token string) (*Token, *base.Info) {
-	userId, err := helper.Rds.Get().Do("get", token)
+func (h *TokenHelper) GetToken(token string) (*Token, *base.Info) {
+	userId, err := h.Rds.Get().Do("get", token)
 	if err != nil {
 		return nil, base.ServerError
 	}
-	return &Token{Token: token, UserId: userId.(int64)}, nil
+	if userId==nil{
+		return nil,base.TokenExpired
+	}
+	return &Token{Token: token, UserId: helper.Int2int64(userId.([]uint8))}, base.Success
 }
 
 type TokenService interface {
@@ -38,7 +42,7 @@ type TokenService interface {
 
 type SimpleTokenService struct {
 	Pool   *redis.Pool
-	expire time.Duration
+	Ex time.Duration
 }
 
 func (simpleTokenService *SimpleTokenService) Expire(token *Token) *base.Info {
@@ -61,12 +65,12 @@ func (simpleTokenService *SimpleTokenService) CreateToken(user int64) (*Token, *
 		return nil, base.ServerError
 	}
 	token := &Token{uid.String(), user}
-	count, err := simpleTokenService.Pool.Get().Do("setnx", token.Token, user, "EX", simpleTokenService.expire.Seconds())
+	ok, err := simpleTokenService.Pool.Get().Do("set", token.Token,user,"EX", simpleTokenService.Ex.Seconds(),"NX")
 	if err != nil {
 		logs.Error(err)
 		return nil, base.ServerError
 	}
-	if count.(int) == 0 {
+	if ok.(string) != "OK" {
 		return nil, base.ServerError
 	}
 	return token, base.Success
@@ -91,7 +95,7 @@ type SimpleSecurity struct {
 	Pool         *redis.Pool
 	SmsClient    sms.Sms
 	UserPersist  entity.UserPersist
-	tokenService *SimpleTokenService
+	TokenService *SimpleTokenService
 }
 
 //用户登录时，用户信息验证成功后，失效这个用户对应的token
@@ -107,20 +111,20 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 	if user.Id == 0 {
 		return base.UsernameOrPasswordError
 	}
-	b := md5.Sum([]byte(password))
-	psd := string(b[:])
-	if psd != user.Password {
+	psd := fmt.Sprintf("%x", md5.Sum([]byte(password)))
+	if psd != *user.Password {
 		return base.UsernameOrPasswordError
 	}
-	t, in := security.tokenService.CreateToken(user.Id)
+	t, in := security.TokenService.CreateToken(user.Id)
 	if !in.IsSuccess() {
 		return in
 	}
+
 	return base.NewSuccess(&User{User: user, Token: t})
 }
 func (security *SimpleSecurity) SendSmsCode(mobile string) *base.Info {
 	code := helper.CreateCaptcha()
-	_, err := security.Pool.Get().Do("setex", "regist_"+mobile,60000, code)
+	_, err := security.Pool.Get().Do("set", "regist_"+mobile,code,"EX",60000, "NX")
 	if err != nil {
 		return base.SmsSendFailure
 	}
@@ -144,12 +148,14 @@ func (security *SimpleSecurity) Regist(mobile, password, smsCode string) *base.I
 		return base.SmsNotMatched
 	}
 	now := time.Now()
-	user := &entity.User{Name: helper.Random(8), CreateTime: &now, Mobile: mobile, Password: password}
+	name:=helper.Random(8)
+	psd := fmt.Sprintf("%x", md5.Sum([]byte(password)))
+	user := &entity.User{Name:&name, CreateTime: &now, Mobile: &mobile, Password: &psd}
 	if !security.UserPersist.Save(user) {
 		return base.SaveUserFailed
 	}
 	//用户已经注册完成
-	t, in := security.tokenService.CreateToken(user.Id)
+	t, in := security.TokenService.CreateToken(user.Id)
 	if !in.IsSuccess() {
 		return base.ServerError
 	}

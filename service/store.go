@@ -4,12 +4,11 @@ import (
 	"os"
 	"github.com/satori/go.uuid"
 	"io/ioutil"
-	"time"
 )
 
 type StoreService interface {
 	//存储文件，返回文件标示符
-	Save(nameSpace string, content []byte) (string, error)
+	Save(nameSpace string, content *[]byte) (string, error)
 	//根据文件标示符，获取实际位置
 	Get(nameSpace string, id string) []byte
 	//存储方式，type唯一
@@ -20,10 +19,9 @@ type StoreService interface {
 type LocalStoreService struct {
 	//此目录应该只能有读写权限
 	Path     string
-	duration *time.Duration
 }
 
-func (localStoreService *LocalStoreService) Save(nameSpace string, content []byte) (string, error) {
+func (localStoreService *LocalStoreService) Save(nameSpace string, content *[]byte) (string, error) {
 	uid, err := uuid.NewV4()
 	if err != nil {
 		return "", err
@@ -34,7 +32,7 @@ func (localStoreService *LocalStoreService) Save(nameSpace string, content []byt
 		return "", err
 	}
 	defer f.Close()
-	_, err = f.Write(content)
+	_, err = f.Write(*content)
 	return id, err
 }
 func (localStoreService *LocalStoreService) Get(nameSpace string, id string) []byte {

@@ -23,7 +23,7 @@ type VideoService interface {
 
 func (video *Video) PushVideo(v *Video, content []byte) *base.Info {
 	//优先保存文件
-	id, err := video.StoreService.Save("video/", content)
+	id, err := video.StoreService.Save("video/", &content)
 	if err != nil {
 		return base.ServerError
 	}
