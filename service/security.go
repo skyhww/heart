@@ -15,8 +15,8 @@ import (
 
 //全局唯一
 type Token struct {
-	Token  string
-	UserId int64
+	Token  string `json:"token"`
+	UserId int64  `json:"-"`
 }
 
 type TokenHelper struct {
@@ -28,8 +28,8 @@ func (h *TokenHelper) GetToken(token string) (*Token, *base.Info) {
 	if err != nil {
 		return nil, base.ServerError
 	}
-	if userId==nil{
-		return nil,base.TokenExpired
+	if userId == nil {
+		return nil, base.TokenExpired
 	}
 	return &Token{Token: token, UserId: helper.Int2int64(userId.([]uint8))}, base.Success
 }
@@ -41,8 +41,8 @@ type TokenService interface {
 }
 
 type SimpleTokenService struct {
-	Pool   *redis.Pool
-	Ex time.Duration
+	Pool *redis.Pool
+	Ex   time.Duration
 }
 
 func (simpleTokenService *SimpleTokenService) Expire(token *Token) *base.Info {
@@ -65,7 +65,7 @@ func (simpleTokenService *SimpleTokenService) CreateToken(user int64) (*Token, *
 		return nil, base.ServerError
 	}
 	token := &Token{uid.String(), user}
-	ok, err := simpleTokenService.Pool.Get().Do("set", token.Token,user,"EX", simpleTokenService.Ex.Seconds(),"NX")
+	ok, err := simpleTokenService.Pool.Get().Do("set", token.Token, user, "EX", simpleTokenService.Ex.Seconds(), "NX")
 	if err != nil {
 		logs.Error(err)
 		return nil, base.ServerError
@@ -124,7 +124,7 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 }
 func (security *SimpleSecurity) SendSmsCode(mobile string) *base.Info {
 	code := helper.CreateCaptcha()
-	_, err := security.Pool.Get().Do("set", "regist_"+mobile,code,"EX",60000, "NX")
+	_, err := security.Pool.Get().Do("set", "regist_"+mobile, code, "EX", 60000, "NX")
 	if err != nil {
 		return base.SmsSendFailure
 	}
@@ -143,14 +143,14 @@ func (security *SimpleSecurity) Regist(mobile, password, smsCode string) *base.I
 	if code == nil {
 		return base.SmsExpired
 	}
-	strCode:=helper.Int2str(code.([]uint8))
+	strCode := helper.Int2str(code.([]uint8))
 	if strCode != smsCode {
 		return base.SmsNotMatched
 	}
 	now := time.Now()
-	name:=helper.Random(8)
+	name := helper.Random(8)
 	psd := fmt.Sprintf("%x", md5.Sum([]byte(password)))
-	user := &entity.User{Name:&name, CreateTime: &now, Mobile: &mobile, Password: &psd}
+	user := &entity.User{Name: &name, CreateTime: &now, Mobile: &mobile, Password: &psd}
 	if !security.UserPersist.Save(user) {
 		return base.SaveUserFailed
 	}

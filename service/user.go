@@ -19,12 +19,39 @@ func (user *User) GetIcon() []byte {
 type UserInfoService interface {
 	UpdateName(token *Token, name *string) (*base.Info)
 	UpdateSignature(token *Token, signature *string) (*base.Info)
-	UpdateIcon(token *Token, icon *[]byte) (*base.Info)
+	UpdateIcon(token *Token, icon *[]byte, name string) (*base.Info)
+	ReadIcon(token *Token) (*base.Info, *[]byte, string)
 }
 
 type UserInfo struct {
 	UserPersist  entity.UserPersist
 	StoreService StoreService
+}
+
+func (user *UserInfo) ReadIcon(token *Token) (*base.Info, *[]byte, string) {
+	u, err := user.UserPersist.GetById(token.UserId)
+	if err != nil {
+		return base.ServerError, nil, ""
+	}
+	if u == nil {
+		return base.NoUserFound, nil, ""
+	}
+	b, name, err := user.StoreService.Get("icon", *u.IconUrl)
+	if err != nil {
+		return base.ServerError, nil, ""
+	}
+	if b==nil||len(b) == 0 {
+		return base.ServerError, nil, ""
+	}
+	return base.Success, &b, name
+}
+
+func (user *UserInfo) GetUser(token *Token) *User {
+	u, err := user.UserPersist.GetById(token.UserId)
+	if err != nil {
+		return nil
+	}
+	return &User{User: u, Token: token, UserPersist: user.UserPersist}
 }
 
 func (user *UserInfo) GetUserByName(name *string) (*entity.User, *base.Info) {
@@ -71,7 +98,7 @@ func (user *UserInfo) UpdateSignature(token *Token, signature *string) (*base.In
 		return base.NoUserFound
 	}
 	u.Signature = signature
-	u, err = user.UserPersist.Update(&entity.User{Id: token.UserId, Signature: signature})
+	u, err = user.UserPersist.Update(u)
 	if err != nil {
 		return base.ServerError
 	}
@@ -80,7 +107,7 @@ func (user *UserInfo) UpdateSignature(token *Token, signature *string) (*base.In
 	}
 	return base.NewSuccess(u)
 }
-func (user *UserInfo) UpdateIcon(token *Token, icon *[]byte) (*base.Info) {
+func (user *UserInfo) UpdateIcon(token *Token, icon *[]byte, suffix string) (*base.Info) {
 	u, err := user.UserPersist.GetById(token.UserId)
 	if err != nil {
 		logs.Error(err)
@@ -89,7 +116,7 @@ func (user *UserInfo) UpdateIcon(token *Token, icon *[]byte) (*base.Info) {
 	if u == nil {
 		return base.NoUserFound
 	}
-	url, err := user.StoreService.Save("icon", icon)
+	url, err := user.StoreService.Save("icon", icon, suffix)
 	if err != nil {
 		logs.Error(err)
 		return base.ServerError

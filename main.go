@@ -32,11 +32,14 @@ func main() {
 	simpleTokenService:=&service.SimpleTokenService{Pool:redisPool,Ex: time.Second*60*60*3}
 	//persist
 	userPersist:=entity.NewUserPersist(db)
+	storePersist:=entity.NewStorePersist(db)
+	userVideoPersist:=entity.NewUserVideoPersist(db)
 	//security
 	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist:userPersist,TokenService:simpleTokenService}
 	//service
-	storeService:= &service.LocalStoreService{Path:"store"}
+	storeService:= &service.LocalStoreService{Path:"store",Type:"LOCAL",StorePersist:storePersist}
 	userInfo:=&service.UserInfo{UserPersist:userPersist,StoreService:storeService}
+	videoService:=&service.SimpleVideoService{StoreService:storeService,UserPersist:userPersist,UserVideoPersist:userVideoPersist}
 	//SmsController
 	smsController := &controller.SmsController{}
 	smsController.Security = security
@@ -48,6 +51,7 @@ func main() {
 	userName:=&controller.Name{TokenHolder:tokenHolder,UserInfo:userInfo}
 	signature:=&controller.Signature{TokenHolder:tokenHolder,UserInfo:userInfo}
 	icon:=&controller.Icon{TokenHolder:tokenHolder,UserInfo:userInfo,Limit:3}
+	videoController:= &controller.VideoController{VideoService:videoService,TokenHolder:tokenHolder,Limit:50}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
 	ns.Router("/token", token)
@@ -56,6 +60,8 @@ func main() {
 	ns.Router("/user/info/name",userName)
 	ns.Router("/user/info/signature",signature)
 	ns.Router("/user/info/icon",icon)
+	ns.Router("/video",videoController)
+
 	beego.AddNamespace(ns)
 	beego.Run()
 }

@@ -14,9 +14,10 @@ type ByteChan struct {
 }
 
 type Page struct {
-	PageSize  int
-	PageNo    int
-	PageCount int
+	PageSize  int `json:"page_size"`
+	PageNo    int `json:"page_no"`
+	PageCount int `json:"page_count"`
+	Data      interface{} `json:"data"`
 }
 
 type Info struct {

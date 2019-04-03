@@ -8,7 +8,7 @@ import (
 	"heart/controller/common"
 	"github.com/astaxie/beego/logs"
 	"io/ioutil"
-	"fmt"
+	"path"
 )
 
 type User struct {
@@ -19,15 +19,15 @@ type User struct {
 
 type UserInfoInput struct {
 	//用户名
-	Name string
+	Name *string `json:"name"`
 	//头像
-	Icon *[]byte
+	Icon *string `json:"name"`
 	//签名
-	Signature *string
+	Signature *string `json:"name"`
 }
 
 func (userInfoInput *UserInfoInput) ValidateName() *base.Info {
-	if len(userInfoInput.Name) == 0 {
+	if userInfoInput.Name == nil {
 		return common.UserNameRequired
 	}
 	return base.Success
@@ -76,9 +76,35 @@ type Icon struct {
 	beego.Controller
 	TokenHolder *common.TokenHolder
 	UserInfo    *service.UserInfo
-	Limit  int64
+	Limit       int64
 }
 
+func (user *Icon) Get()  {
+	info := base.Success
+	defer func() {
+		if !info.IsSuccess(){
+			user.Data["json"] = info
+			user.ServeJSON()
+		}
+	}()
+	t, info := user.TokenHolder.GetToken(&user.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	info,b,name:=user.UserInfo.ReadIcon(t)
+	if !info.IsSuccess(){
+		return
+	}
+	output:=user.Ctx.Output
+	output.Header("Content-Disposition", "attachment; filename="+name)
+	output.Header("Content-Description", "File Transfer")
+	output.Header("Content-Type", "application/octet-stream")
+	output.Header("Content-Transfer-Encoding", "binary")
+	output.Header("Expires", "0")
+	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Pragma", "public")
+	user.Ctx.ResponseWriter.Write(*b)
+}
 
 //上传头像
 func (user *Icon) Post() {
@@ -86,69 +112,34 @@ func (user *Icon) Post() {
 	defer func() {
 		user.Data["json"] = info
 		user.ServeJSON()
+		user.Ctx.Request.MultipartForm.RemoveAll()
 	}()
-	defer user.Ctx.Request.MultipartForm.RemoveAll()
-	/*err:=user.Ctx.Request.ParseMultipartForm(user.Limit)
-	if err!=nil{
-		logs.Error(err)
-		info =common.IllegalRequestDataFormat
-		return
-	}
-
-	form,err:=r.ReadForm(user.Limit)
-	if err!=nil{
-		logs.Error(err)
-		info =common.IllegalRequestDataFormat
-		return
-	}
-	head:=form.File["icon"]
-	if  len(head)==0{
-		info =common.IconRequired
-		return
-	}
-	if len(head)>1{
-		info =common.MultiIcon
-		return
-	}
-	if head[0].Size>user.Limit{
-		info =common.FileSizeUnbound
-		return
-	}
-	f,err:=head[0].Open()
-	defer f.Close()
-	if err!=nil{
-		logs.Error(err)
-		info =common.FileUploadFailed
-		return
-	}*/
-	name:=user.GetString("fileName")
-	for e := range user.Ctx.Request.Form {
-		fmt.Println(e)
-	}
-	f,h,err:=user.GetFile(name)
-	if err!=nil{
-		logs.Error(err)
-		info =common.FileUploadFailed
-		return
-	}
-	fmt.Print(h.Filename)
-	b,err:= ioutil.ReadAll(f)
-	if err!=nil{
-		logs.Error(err)
-		info =common.FileUploadFailed
-		return
-	}
-	in := &UserInfoInput{Icon:&b}
 	t, info := user.TokenHolder.GetToken(&user.Controller)
 	if !info.IsSuccess() {
 		return
 	}
-	info=user.UserInfo.UpdateSignature(t,in.Signature)
+	f, h, err := user.GetFile("icon")
+	if err != nil {
+		logs.Error(err)
+		info = common.FileUploadFailed
+		return
+	}
+	defer f.Close()
+	//字节
+	if h.Size > (user.Limit << 20) {
+		info = common.FileSizeUnbound
+		return
+	}
+	ext := path.Ext(h.Filename)
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		logs.Error(err)
+		info = common.FileUploadFailed
+		return
+	}
+
+	info = user.UserInfo.UpdateIcon(t, &b, ext)
 }
-
-
-
-
 
 type Signature struct {
 	beego.Controller
@@ -172,7 +163,7 @@ func (user *Signature) Post() {
 	if !info.IsSuccess() {
 		return
 	}
-	info=user.UserInfo.UpdateSignature(t,in.Signature)
+	info = user.UserInfo.UpdateSignature(t, in.Signature)
 }
 
 type Name struct {
@@ -201,5 +192,5 @@ func (user *Name) Post() {
 	if !info.IsSuccess() {
 		return
 	}
-	info=user.UserInfo.UpdateName(t, &in.Name)
+	info = user.UserInfo.UpdateName(t, in.Name)
 }

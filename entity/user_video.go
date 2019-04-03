@@ -18,6 +18,11 @@ type UserVideo struct {
 type UserVideoPersist interface {
 	Save(video *UserVideo) error
 	Delete(video *UserVideo) error
+	Get(video *UserVideo)error
+}
+
+func NewUserVideoPersist(db *sqlx.DB)UserVideoPersist{
+	return &UserVideoDao{db:db}
 }
 
 type UserVideoDao struct {
@@ -26,7 +31,7 @@ type UserVideoDao struct {
 
 func (userVideoDao *UserVideoDao) Save(video *UserVideo) error {
 	tx := userVideoDao.db.MustBegin()
-	r, err := tx.NamedExec("INSERT INTO user_video (user_id, url,hash,CreateTime) VALUES (:user_id, :url, :hash,:create_time)", video)
+	r, err := tx.NamedExec("INSERT INTO user_video (user_id, url,hash,create_time,enable) VALUES (:user_id, :url, :hash,:create_time,1)", video)
 	if err != nil {
 		return err
 	}
@@ -41,7 +46,19 @@ func (userVideoDao *UserVideoDao) Save(video *UserVideo) error {
 
 func (userVideoDao *UserVideoDao) Delete(video *UserVideo) error {
 	tx := userVideoDao.db.MustBegin()
-	_, err := tx.NamedExec("update user_video set enbale=0 where id=:id", video)
+	_, err := tx.NamedExec("update user_video set enbale=0 where id=:id and user_id=:user_id", video)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (userVideoDao *UserVideoDao) Get(video *UserVideo)error {
+	tx := userVideoDao.db.MustBegin()
+	_, err := tx.NamedExec("select id,url,hash,create_time from user_video where id=:id and user_id=:user_id", video)
 	if err != nil {
 		return err
 	}

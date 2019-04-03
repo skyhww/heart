@@ -22,3 +22,4 @@ var IconRequired= &base.Info{Code: "000016", Message: "头像为空"}
 var MultiIcon= &base.Info{Code: "000017", Message: "头像个数大于一"}
 var FileSizeUnbound= &base.Info{Code: "000018", Message: "文件大小超出限制"}
 var FileUploadFailed= &base.Info{Code: "000019", Message: "上传文件失败"}
+var FileRequired= &base.Info{Code: "000020", Message: "上传的文件不能为空"}
