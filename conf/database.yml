@@ -1,5 +1,5 @@
 driver: mysql
-dsn: root:TEST_zhangmen1dui1@tcp(10.80.110.52:3306)/heart?charset=utf8&parseTime=true
+dsn: root:TEST_zhanmen1dui1@tcp(10.80.110.52:3306)/heart?charset=utf8&parseTime=true
 conn_max_lifetime_seconds: 3600
 max_idle_conns: 3
 max_open_conns: 10
