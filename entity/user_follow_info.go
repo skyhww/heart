@@ -60,7 +60,7 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowUsers(userId int64, page *b
 	if err != nil&&err!=sql.ErrNoRows {
 		return err
 	}
-	page.PageCount = count / page.PageSize
+	page.Count = count / page.PageSize
 	page.Data = info
 	return nil
 }
@@ -88,7 +88,7 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowed(userId *UserFollowInfo, 
 	if err != nil&&err!=sql.ErrNoRows {
 		return err
 	}
-	page.PageCount = count / page.PageSize
+	page.Count = count / page.PageSize
 	page.Data = info
 	return nil
 }
