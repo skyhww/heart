@@ -4,6 +4,7 @@
 // @Contact astaxie@gmail.com
 package main
 
+
 import (
 	"github.com/astaxie/beego"
 	"github.com/garyburd/redigo/redis"
