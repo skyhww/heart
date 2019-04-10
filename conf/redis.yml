@@ -1,4 +1,4 @@
-url: redis://147.110.145.212:6379
+url: redis://47.110.145.212:6379
 auth: tingsn
 max_idle: 3
 idle_time_out_seconds: 60
