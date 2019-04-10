@@ -6,7 +6,7 @@ sms:
       code: SMS_162520135
       method: POST
       scheme:  https
-      sign_name:
+      sign_name: 3dHeart模拟器
       template_code:
       domain: dysmsapi.aliyuncs.com
       version: 2017-05-25
