@@ -8,7 +8,8 @@ import (
 )
 
 type Sms interface {
-	SendSmsCode(phoneNo string, content string) bool
+	SendRegistCode(phoneNo string, content string) bool
+	SendResetPasswordCode(phoneNo string, content string) bool
 }
 
 type AliYun struct {
@@ -16,22 +17,31 @@ type AliYun struct {
 	Client       *sdk.Client
 }
 
-func (aliYun *AliYun) getRequest(phoneNo string, code string) *requests.CommonRequest {
+func (aliYun *AliYun) getRequest(phoneNo string, code string,c *cfg.SendSmsConfig) *requests.CommonRequest {
 	request := requests.NewCommonRequest()
-	request.Method = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.Method
-	request.Scheme = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.Scheme
-	request.Domain = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.Domain
-	request.Version = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.Version
-	request.ApiName = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.ApiName
+	request.Method = c.Method
+	request.Scheme = c.Scheme
+	request.Domain = c.Domain
+	request.Version = c.Version
+	request.ApiName = c.ApiName
 	request.QueryParams["PhoneNumbers"] = phoneNo
-	request.QueryParams["SignName"] = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.SignName
-	request.QueryParams["TemplateCode"] = aliYun.AliYunConfig.SmsConfig.SendSmsConfig.TemplateCode
+	request.QueryParams["SignName"] = c.SignName
+	request.QueryParams["TemplateCode"] = c.Code
 	request.QueryParams["TemplateParam"] = "{\"code\":\"" + code + "\"}"
 	return request
 }
 
-func (aliYun *AliYun) SendSmsCode(phoneNo string, content string) bool {
-	response, err := aliYun.Client.ProcessCommonRequest(aliYun.getRequest(phoneNo, content))
+func (aliYun *AliYun) SendRegistCode(phoneNo string, content string) bool {
+	response, err := aliYun.Client.ProcessCommonRequest(aliYun.getRequest(phoneNo, content,aliYun.AliYunConfig.SmsConfig.Regist))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Print(response.GetHttpContentString())
+	return true
+}
+
+func (aliYun *AliYun) SendResetPasswordCode(phoneNo string, content string) bool {
+	response, err := aliYun.Client.ProcessCommonRequest(aliYun.getRequest(phoneNo, content,aliYun.AliYunConfig.SmsConfig.ResetPassword))
 	if err != nil {
 		panic(err)
 	}

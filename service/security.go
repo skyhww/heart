@@ -86,7 +86,8 @@ func (simpleTokenService *SimpleTokenService) GetToken(token string) (*Token, *b
 
 type Security interface {
 	Login(mobile, password string) *base.Info
-	SendSmsCode(mobile string) *base.Info
+	SendRestPasswordCode(mobile string) *base.Info
+	SendRegistCode(mobile string) *base.Info
 	Regist(mobile, password, smsCode string) *base.Info
 	LogOut(token *Token) *base.Info
 }
@@ -122,18 +123,32 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 
 	return base.NewSuccess(&User{User: user, Token: t})
 }
-func (security *SimpleSecurity) SendSmsCode(mobile string) *base.Info {
+
+func (security *SimpleSecurity) SendRegistCode(mobile string) *base.Info {
 	code := helper.CreateCaptcha()
 	_, err := security.Pool.Get().Do("set", "regist_"+mobile, code, "EX", 60000, "NX")
 	if err != nil {
 		return base.SmsSendFailure
 	}
-	b := security.SmsClient.SendSmsCode(mobile, code)
+	b := security.SmsClient.SendRegistCode(mobile, code)
 	if !b {
 		return base.SmsSendFailure
 	}
 	return base.Success
 }
+func (security *SimpleSecurity) SendRestPasswordCode(mobile string) *base.Info {
+	code := helper.CreateCaptcha()
+	_, err := security.Pool.Get().Do("set", "rest_"+mobile, code, "EX", 60000, "NX")
+	if err != nil {
+		return base.SmsSendFailure
+	}
+	b := security.SmsClient.SendRegistCode(mobile, code)
+	if !b {
+		return base.SmsSendFailure
+	}
+	return base.Success
+}
+
 
 func (security *SimpleSecurity) Regist(mobile, password, smsCode string) *base.Info {
 	code, err := security.Pool.Get().Do("get", "regist_"+mobile)

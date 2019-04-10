@@ -8,14 +8,14 @@ type AliYunConfig struct {
 }
 
 type SmsConfig struct {
-	SendSmsConfig *SendSmsConfig `yaml:"send_sms_code"`
+	ResetPassword *SendSmsConfig `yaml:"reset_password"`
+	Regist *SendSmsConfig `yaml:"regist"`
 }
 type SendSmsConfig struct {
 	Code         string `yaml:"code"`
 	Method       string `yaml:"method"`
 	Scheme       string `yaml:"scheme"`
 	SignName     string `yaml:"sign_name"`
-	TemplateCode string `yaml:"template_code"`
 	Domain       string `yaml:"domain"`
 	Version      string `yaml:"version"`
 	ApiName      string `yaml:"api_name"`

@@ -61,7 +61,6 @@ func (loginInput *PassInput) validateRegistPassword() (*base.Info) {
 	return base.Success
 }
 
-
 func (token *Token) Get() {
 	info := base.Success
 	defer func() {
@@ -69,7 +68,7 @@ func (token *Token) Get() {
 		token.ServeJSON()
 	}()
 	passInput := &PassInput{Mobile: token.GetString("mobile"), Password: token.GetString("password")}
-	info =passInput.validateMobile()
+	info = passInput.validateMobile()
 	if !info.IsSuccess() {
 		return
 	}
@@ -113,5 +112,10 @@ func (sms *SmsController) Get() {
 	if !info.IsSuccess() {
 		return
 	}
-	info = sms.Security.SendSmsCode(in.Mobile)
+	str := sms.GetString("use")
+	if str == "regist" {
+		info = sms.Security.SendRegistCode(in.Mobile)
+	} else if str == "reset_password" {
+		info = sms.Security.SendRestPasswordCode(in.Mobile)
+	}
 }
