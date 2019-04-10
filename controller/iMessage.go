@@ -1,19 +1,24 @@
 package controller
 
 import (
-	"github.com/astaxie/beego"
+	"github.com/gorilla/websocket"
+	"time"
+	"github.com/astaxie/beego/logs"
+	"fmt"
+	"net/http"
 )
 
 type IMessageController struct {
-	beego.Controller
-} 
+}
 
-func (iMessageController *IMessageController) Get(){
-	/*conn, err := websocket.Upgrader{}.Upgrade(iMessageController.Ctx.ResponseWriter, iMessageController.Ctx.Request, nil)
+func (iMessageController *IMessageController) ServeHTTP(w http.ResponseWriter, r *http.Request){
+	conn, err :=websocket.Upgrade(w, r, nil, 1024, 1024)
 	if err != nil {
-		iMessageController.Ctx.ResponseWriter.Status=406
-		iMessageController.Ctx.ResponseWriter.Flush()
+		logs.Error(err)
 		return
 	}
-	fmt.Print(conn)*/
+	for {
+		time.Sleep(time.Second * 1)
+		fmt.Print(conn.WriteJSON("{\"a\":1}"))
+	}
 }

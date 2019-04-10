@@ -53,6 +53,8 @@ func main() {
 	signature:=&controller.Signature{TokenHolder:tokenHolder,UserInfo:userInfo}
 	icon:=&controller.Icon{TokenHolder:tokenHolder,UserInfo:userInfo,Limit:3}
 	videoController:= &controller.VideoController{VideoService:videoService,TokenHolder:tokenHolder,Limit:50}
+	//iMessage
+	iMessage:=&controller.IMessageController{}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
 	ns.Router("/token", token)
@@ -62,7 +64,7 @@ func main() {
 	ns.Router("/user/info/signature",signature)
 	ns.Router("/user/info/icon",icon)
 	ns.Router("/video",videoController)
-
+	ns.Handler("/message",iMessage)
 	beego.AddNamespace(ns)
 	beego.Run()
 }
