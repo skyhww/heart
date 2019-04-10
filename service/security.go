@@ -125,6 +125,10 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 }
 
 func (security *SimpleSecurity) SendRegistCode(mobile string) *base.Info {
+	u, _ := security.UserPersist.Get(mobile)
+	if u != nil {
+		return base.SignedUser
+	}
 	code := helper.CreateCaptcha()
 	_, err := security.Pool.Get().Do("set", "regist_"+mobile, code, "EX", 60000, "NX")
 	if err != nil {
@@ -137,8 +141,12 @@ func (security *SimpleSecurity) SendRegistCode(mobile string) *base.Info {
 	return base.Success
 }
 func (security *SimpleSecurity) SendRestPasswordCode(mobile string) *base.Info {
+	u, err := security.UserPersist.Get(mobile)
+	if err != nil && u == nil {
+		return base.NonSignedUser
+	}
 	code := helper.CreateCaptcha()
-	_, err := security.Pool.Get().Do("set", "rest_"+mobile, code, "EX", 60000, "NX")
+	_, err = security.Pool.Get().Do("set", "rest_"+mobile, code, "EX", 60000, "NX")
 	if err != nil {
 		return base.SmsSendFailure
 	}
@@ -148,7 +156,6 @@ func (security *SimpleSecurity) SendRestPasswordCode(mobile string) *base.Info {
 	}
 	return base.Success
 }
-
 
 func (security *SimpleSecurity) Regist(mobile, password, smsCode string) *base.Info {
 	code, err := security.Pool.Get().Do("get", "regist_"+mobile)

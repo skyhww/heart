@@ -112,6 +112,7 @@ func (sms *SmsController) Get() {
 	if !info.IsSuccess() {
 		return
 	}
+
 	str := sms.GetString("use")
 	if str == "regist" {
 		info = sms.Security.SendRegistCode(in.Mobile)
