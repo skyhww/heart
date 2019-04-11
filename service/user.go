@@ -50,12 +50,12 @@ func (user *UserInfo) ReadIcon(token *Token) (*base.Info, *[]byte, string) {
 	return base.Success, &b, name
 }
 
-func (user *UserInfo) GetUser(token *Token) (*User,error) {
+func (user *UserInfo) GetUser(token *Token) (*User, error) {
 	u, err := user.UserPersist.GetById(token.UserId)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &User{User: u, Token: token, UserPersist: user.UserPersist},nil
+	return &User{User: u, Token: token, UserPersist: user.UserPersist}, nil
 }
 
 func (user *UserInfo) GetUserByName(name *string) (*entity.User, *base.Info) {
@@ -153,14 +153,6 @@ type UserService interface {
 	//收藏帖子
 	Collect(post *Post) bool
 }
-
-/*
-type UserInfo struct {
-	UserPersist          entity.UserPersist
-	StoreService         StoreService
-	UserExtraInfoPersist entity.UserExtraInfoPersist
-}
-*/
 
 func (user *UserInfo) GetExtraInfo() *entity.UserExtraInfo {
 	//id
