@@ -36,12 +36,16 @@ type MessagePersist interface {
 	//SaveStreamMessage(message *Message) error
 	GetUnreadCount(userId int64) (int, error)
 	SetRead(userId, messageId int64) (int64, error)
+	GetMessage(userId, messageId int64)(*Message,error)
 }
 
 type MessageDao struct {
 	DB *sqlx.DB
 }
 
+func NewMessagePersist(DB *sqlx.DB)MessagePersist{
+	return &MessageDao{DB:DB}
+}
 func (messageDao *MessageDao) SetRead(userId, messageId int64) (int64, error) {
 	tx := messageDao.DB.MustBegin()
 	r, err := tx.Exec("update message set read=1 where id=? and to_user=? and read=0", messageId, userId)
@@ -76,6 +80,14 @@ func (messageDao *MessageDao) Save(message *Message) error {
 func (messageDao *MessageDao) GetUnreadMessage(userId, lastId int64) (*Message, error) {
 	m := &Message{}
 	err := messageDao.DB.Select(m, "select * from message where to_user=?  and id>?  and read=0 order by create_time desc limit 1", userId, lastId)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+func (messageDao *MessageDao) GetMessage(userId, messageId int64)(*Message,error) {
+	m := &Message{}
+	err := messageDao.DB.Select(m, "select * from message where to_user=?  and id=? ", userId, messageId)
 	if err != nil {
 		return nil, err
 	}

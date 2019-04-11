@@ -6,6 +6,8 @@ import (
 	"heart/service"
 	"heart/service/common"
 	"github.com/astaxie/beego/logs"
+	"path"
+	"io/ioutil"
 )
 
 type MessageRequest struct {
@@ -15,12 +17,6 @@ type MessageRequest struct {
 }
 
 func (messageRequest *MessageRequest) ValidateMessage() *base.Info {
-	if messageRequest.Message == nil && messageRequest.Url == nil {
-		return common.MessageRequired
-	}
-	if messageRequest.Message != nil && messageRequest.Url != nil {
-		return common.IllegalRequestDataFormat
-	}
 	if messageRequest.ToUser == 0 {
 		logs.Warn("接收人为空！")
 		return common.IllegalRequestDataFormat
@@ -32,6 +28,8 @@ type IMessageController struct {
 	beego.Controller
 	TokenHolder    *common.TokenHolder
 	MessageService service.MessageService
+	//MB
+	Limit int64
 }
 
 func (iMessageController *IMessageController) Get() {
@@ -52,6 +50,53 @@ func (iMessageController *IMessageController) Get() {
 	info = iMessageController.MessageService.GetMessage(t, id)
 }
 
+//文本消息
+func (iMessageController *IMessageController) putText(t *service.Token, toUser int64) *base.Info {
+	info := base.Success
+	m := &MessageRequest{}
+	info = iMessageController.TokenHolder.ReadJsonBody(&iMessageController.Controller, m)
+	if !info.IsSuccess() {
+		return info
+	}
+	m.ToUser = toUser
+	info = m.ValidateMessage()
+	if m.Message == nil {
+		return common.MessageRequired
+	}
+	sm := &service.Message{}
+	sm.Message.Message = m.Message
+	sm.Message.ToUser = m.ToUser
+	return iMessageController.MessageService.SendTxtMessage(t, sm)
+}
+
+//流消息
+func (iMessageController *IMessageController) putBinary(t *service.Token, toUser int64) *base.Info {
+	info := base.Success
+	f, h, err := iMessageController.GetFile("attach")
+	if err != nil {
+		logs.Error(err)
+		return common.FileUploadFailed
+	}
+	defer f.Close()
+	//字节
+	if h.Size > (iMessageController.Limit << 20) {
+		return common.FileSizeUnbound
+	}
+	ext := path.Ext(h.Filename)
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		logs.Error(err)
+		return common.FileUploadFailed
+	}
+	if b == nil || len(b) == 0 {
+		return common.FileRequired
+	}
+	m := &service.Message{}
+	m.ToUser = toUser
+	iMessageController.MessageService.SendBinaryMessage(t, m, &b, ext)
+	return info
+}
+
 func (iMessageController *IMessageController) Put() {
 	info := base.Success
 	defer func() {
@@ -62,20 +107,63 @@ func (iMessageController *IMessageController) Put() {
 	if !info.IsSuccess() {
 		return
 	}
-	m := &MessageRequest{}
-	info=iMessageController.TokenHolder.ReadJsonBody(&iMessageController.Controller, m)
-	if !info.IsSuccess(){
+	ty := iMessageController.GetString("type")
+	toUser, err := iMessageController.GetInt64("to_user", -1)
+	if err != nil || toUser == -1 {
+		info = common.IllegalRequest
 		return
 	}
-	info=m.ValidateMessage()
-	if !info.IsSuccess(){
+	if ty == "text" {
+		info = iMessageController.putText(t, toUser)
+	} else if ty == "binary" {
+		info = iMessageController.putBinary(t, toUser)
+	} else {
+		info = common.IllegalRequestDataFormat
+	}
+
+}
+
+//附件消息
+type IMessageAttachController struct {
+	beego.Controller
+	TokenHolder    *common.TokenHolder
+	MessageService service.MessageService
+	//MB
+	Limit int64
+}
+
+func (iMessageAttachController *IMessageAttachController) Get() {
+	info := base.Success
+	defer func() {
+		if !info.IsSuccess() {
+			iMessageAttachController.Data["json"] = info
+			iMessageAttachController.ServeJSON()
+		} else {
+			iMessageAttachController.Ctx.ResponseWriter.Flush()
+		}
+	}()
+	id, err := iMessageAttachController.GetInt64("id")
+	if err != nil || id == 0 {
+		info = common.IllegalRequest
 		return
 	}
-	sm:=&service.Message{}
-	sm.Message.Message=m.Message
-	sm.Message.Url=m.Url
-	sm.Message.ToUser=m.ToUser
-	info=iMessageController.MessageService.SendMessage(t,sm)
+	t, info := iMessageAttachController.TokenHolder.GetToken(&iMessageAttachController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	info, b, name := iMessageAttachController.MessageService.GetMessageAttach(t, id)
+	if !info.IsSuccess() {
+		return
+	}
+	output := iMessageAttachController.Ctx.Output
+	output.Header("Content-Disposition", "attachment; filename="+name)
+	output.Header("Content-Description", "File Transfer")
+	output.Header("Content-Type", "application/octet-stream")
+	output.Header("Content-Transfer-Encoding", "binary")
+	output.Header("Expires", "0")
+	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Pragma", "public")
+	iMessageAttachController.Ctx.ResponseWriter.Write(*b)
 }
 
 /*func NewIMessageController() *IMessageController {

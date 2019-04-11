@@ -4,7 +4,6 @@
 // @Contact astaxie@gmail.com
 package main
 
-
 import (
 	"github.com/astaxie/beego"
 	"github.com/garyburd/redigo/redis"
@@ -29,42 +28,46 @@ func main() {
 	db := loadDatabase(cfg.DatabaseConfig)
 
 	//helper
-	tokenHelper:=&service.TokenHelper{Rds:redisPool}
-	simpleTokenService:=&service.SimpleTokenService{Pool:redisPool,Ex: time.Second*60*60*3}
+	tokenHelper := &service.TokenHelper{Rds: redisPool}
+	simpleTokenService := &service.SimpleTokenService{Pool: redisPool, Ex: time.Second * 60 * 60 * 3}
 	//persist
-	userPersist:=entity.NewUserPersist(db)
-	storePersist:=entity.NewStorePersist(db)
-	userVideoPersist:=entity.NewUserVideoPersist(db)
+	userPersist := entity.NewUserPersist(db)
+	storePersist := entity.NewStorePersist(db)
+	userVideoPersist := entity.NewUserVideoPersist(db)
+	messagePersist := entity.NewMessagePersist(db)
 	//security
-	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist:userPersist,TokenService:simpleTokenService}
+	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
 	//service
-	storeService:= &service.LocalStoreService{Path:"store",Type:"LOCAL",StorePersist:storePersist}
-	userInfo:=&service.UserInfo{UserPersist:userPersist,StoreService:storeService}
-	videoService:=&service.SimpleVideoService{StoreService:storeService,UserPersist:userPersist,UserVideoPersist:userVideoPersist}
+	storeService := &service.LocalStoreService{Path: "store", Type: "LOCAL", StorePersist: storePersist}
+	userInfo := &service.UserInfo{UserPersist: userPersist, StoreService: storeService}
+	videoService := &service.SimpleVideoService{StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
+	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist}
 	//SmsController
 	smsController := &controller.SmsController{}
 	smsController.Security = security
 	//Token
 	token := &controller.Token{Service: security}
-	tokenHolder:=&common.TokenHolder{Name:"token",Helper:tokenHelper}
+	tokenHolder := &common.TokenHolder{Name: "token", Helper: tokenHelper}
 	//user
-	userController := &controller.User{Service: security,TokenHolder:tokenHolder}
-	userName:=&controller.Name{TokenHolder:tokenHolder,UserInfo:userInfo}
-	signature:=&controller.Signature{TokenHolder:tokenHolder,UserInfo:userInfo}
-	icon:=&controller.Icon{TokenHolder:tokenHolder,UserInfo:userInfo,Limit:3}
-	videoController:= &controller.VideoController{VideoService:videoService,TokenHolder:tokenHolder,Limit:50}
+	userController := &controller.User{Service: security, TokenHolder: tokenHolder}
+	userName := &controller.Name{TokenHolder: tokenHolder, UserInfo: userInfo}
+	signature := &controller.Signature{TokenHolder: tokenHolder, UserInfo: userInfo}
+	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 3}
+	videoController := &controller.VideoController{VideoService: videoService, TokenHolder: tokenHolder, Limit: 50}
 	//iMessage
-	iMessage:=&controller.IMessageController{}
+	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder}
+	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 5}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
 	ns.Router("/token", token)
 	ns.Router("/sms/:mobile", smsController)
 	ns.Router("/user", userController)
-	ns.Router("/user/info/name",userName)
-	ns.Router("/user/info/signature",signature)
-	ns.Router("/user/info/icon",icon)
-	ns.Router("/video",videoController)
-	ns.Handler("/message",iMessage)
+	ns.Router("/user/info/name", userName)
+	ns.Router("/user/info/signature", signature)
+	ns.Router("/user/info/icon", icon)
+	ns.Router("/video", videoController)
+	ns.Router("/message", iMessage)
+	ns.Router("/message/attach", iMessageAttachController)
 	beego.AddNamespace(ns)
 	beego.Run()
 }
