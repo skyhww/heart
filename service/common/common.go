@@ -54,3 +54,4 @@ var IllegalOperation = &Info{Code: "000109", Message: "非法操作"}
 var NoUserFound = &Info{Code: "000120", Message: "用户不存在"}
 var TokenExpired = &Info{Code: "000121", Message: "token已过期，请重新登录"}
 var SignedUser = &Info{Code: "000122", Message: "用户已注册"}
+var TargetUserNotFound = &Info{Code: "000123", Message: "接收用户不存在"}
