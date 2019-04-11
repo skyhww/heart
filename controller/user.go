@@ -72,6 +72,20 @@ func (user *User) Put() {
 	info = user.Service.Regist(passInput.Mobile, passInput.Password, passInput.SmsCode)
 }
 
+//获取用户信息
+func (user *User) Get() {
+	info := base.Success
+	defer func() {
+		user.Data["json"] = info
+		user.ServeJSON()
+	}()
+	u, info := user.TokenHolder.GetUser(&user.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	info.Data = u
+}
+
 type Icon struct {
 	beego.Controller
 	TokenHolder *common.TokenHolder
@@ -79,10 +93,10 @@ type Icon struct {
 	Limit       int64
 }
 
-func (user *Icon) Get()  {
+func (user *Icon) Get() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess(){
+		if !info.IsSuccess() {
 			user.Data["json"] = info
 			user.ServeJSON()
 		}
@@ -91,11 +105,11 @@ func (user *Icon) Get()  {
 	if !info.IsSuccess() {
 		return
 	}
-	info,b,name:=user.UserInfo.ReadIcon(t)
-	if !info.IsSuccess(){
+	info, b, name := user.UserInfo.ReadIcon(t)
+	if !info.IsSuccess() {
 		return
 	}
-	output:=user.Ctx.Output
+	output := user.Ctx.Output
 	output.Header("Content-Disposition", "attachment; filename="+name)
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")

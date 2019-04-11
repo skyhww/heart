@@ -50,12 +50,12 @@ func (user *UserInfo) ReadIcon(token *Token) (*base.Info, *[]byte, string) {
 	return base.Success, &b, name
 }
 
-func (user *UserInfo) GetUser(token *Token) *User {
+func (user *UserInfo) GetUser(token *Token) (*User,error) {
 	u, err := user.UserPersist.GetById(token.UserId)
 	if err != nil {
-		return nil
+		return nil,err
 	}
-	return &User{User: u, Token: token, UserPersist: user.UserPersist}
+	return &User{User: u, Token: token, UserPersist: user.UserPersist},nil
 }
 
 func (user *UserInfo) GetUserByName(name *string) (*entity.User, *base.Info) {
