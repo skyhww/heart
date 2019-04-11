@@ -1,15 +1,18 @@
 package service
 
 import (
+	"github.com/astaxie/beego/logs"
 	"heart/entity"
 	"heart/service/common"
-	"github.com/astaxie/beego/logs"
 )
 
 type User struct {
-	*entity.User                   `json:"user"`
-	Token       *Token             `json:"token"`
-	UserPersist entity.UserPersist `json:"-"`
+	*entity.User `json:"user"`
+	Token        *Token             `json:"token"`
+	UserPersist  entity.UserPersist `json:"-"`
+
+	*entity.UserExtraInfo `json:"userExtraInfo"`
+	UserExtraInfoPersist  entity.UserExtraInfoPersist `json:"-"`
 }
 
 func (user *User) GetIcon() []byte {
@@ -17,15 +20,16 @@ func (user *User) GetIcon() []byte {
 }
 
 type UserInfoService interface {
-	UpdateName(token *Token, name *string) (*base.Info)
-	UpdateSignature(token *Token, signature *string) (*base.Info)
-	UpdateIcon(token *Token, icon *[]byte, name string) (*base.Info)
+	UpdateName(token *Token, name *string) *base.Info
+	UpdateSignature(token *Token, signature *string) *base.Info
+	UpdateIcon(token *Token, icon *[]byte, name string) *base.Info
 	ReadIcon(token *Token) (*base.Info, *[]byte, string)
 }
 
 type UserInfo struct {
-	UserPersist  entity.UserPersist
-	StoreService StoreService
+	UserPersist          entity.UserPersist
+	StoreService         StoreService
+	UserExtraInfoPersist entity.UserExtraInfoPersist
 }
 
 func (user *UserInfo) ReadIcon(token *Token) (*base.Info, *[]byte, string) {
@@ -40,7 +44,7 @@ func (user *UserInfo) ReadIcon(token *Token) (*base.Info, *[]byte, string) {
 	if err != nil {
 		return base.ServerError, nil, ""
 	}
-	if b==nil||len(b) == 0 {
+	if b == nil || len(b) == 0 {
 		return base.ServerError, nil, ""
 	}
 	return base.Success, &b, name
@@ -62,7 +66,7 @@ func (user *UserInfo) GetUserByName(name *string) (*entity.User, *base.Info) {
 	return u, base.Success
 }
 
-func (user *UserInfo) UpdateName(token *Token, name *string) (*base.Info) {
+func (user *UserInfo) UpdateName(token *Token, name *string) *base.Info {
 	u, f := user.GetUserByName(name)
 	if !f.IsSuccess() {
 		return f
@@ -89,7 +93,7 @@ func (user *UserInfo) UpdateName(token *Token, name *string) (*base.Info) {
 	return base.NewSuccess(u)
 }
 
-func (user *UserInfo) UpdateSignature(token *Token, signature *string) (*base.Info) {
+func (user *UserInfo) UpdateSignature(token *Token, signature *string) *base.Info {
 	u, err := user.UserPersist.GetById(token.UserId)
 	if err != nil {
 		return base.GetUserInfoFailed
@@ -107,7 +111,7 @@ func (user *UserInfo) UpdateSignature(token *Token, signature *string) (*base.In
 	}
 	return base.NewSuccess(u)
 }
-func (user *UserInfo) UpdateIcon(token *Token, icon *[]byte, suffix string) (*base.Info) {
+func (user *UserInfo) UpdateIcon(token *Token, icon *[]byte, suffix string) *base.Info {
 	u, err := user.UserPersist.GetById(token.UserId)
 	if err != nil {
 		logs.Error(err)
@@ -148,4 +152,22 @@ type UserService interface {
 	Follow(user *User) bool
 	//收藏帖子
 	Collect(post *Post) bool
+}
+
+/*
+type UserInfo struct {
+	UserPersist          entity.UserPersist
+	StoreService         StoreService
+	UserExtraInfoPersist entity.UserExtraInfoPersist
+}
+*/
+
+func (user *UserInfo) GetExtraInfo() *entity.UserExtraInfo {
+	//id
+	var id int64
+	u, err := user.UserExtraInfoPersist.GetById(id)
+	if err != nil {
+		return nil
+	}
+	return u
 }
