@@ -5,6 +5,7 @@ import (
 	"heart/service/common"
 	"time"
 	"fmt"
+	"github.com/astaxie/beego/logs"
 )
 
 type Message struct {
@@ -26,20 +27,25 @@ type SimpleMessageService struct {
 func (service *SimpleMessageService) GetMessageAttach(token *Token, messageId int64) (*base.Info, *[]byte, string) {
 	u, err := service.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError, nil, ""
 	}
 	if u == nil {
+		logs.Error(err)
 		return base.NoUserFound, nil, ""
 	}
 	m, err := service.MessagePersist.GetMessage(token.UserId, messageId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError, nil, ""
 	}
 	if m.Url == nil {
+		logs.Error(err)
 		return base.MessageAttachNotFound, nil, ""
 	}
-	b, name, err := service.StoreService.Get("store/message/send/"+fmt.Sprint(m.FromUser), *m.Url)
+	b, name, err := service.StoreService.Get("message/send/"+fmt.Sprint(m.FromUser), *m.Url)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError, nil, ""
 	}
 	return base.Success, &b, name
@@ -47,6 +53,7 @@ func (service *SimpleMessageService) GetMessageAttach(token *Token, messageId in
 func (service *SimpleMessageService) GetMessage(token *Token, id int64) *base.Info {
 	u, err := service.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -54,6 +61,7 @@ func (service *SimpleMessageService) GetMessage(token *Token, id int64) *base.In
 	}
 	m, err := service.MessagePersist.GetUnreadMessage(token.UserId, id)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if m == nil {
@@ -61,6 +69,7 @@ func (service *SimpleMessageService) GetMessage(token *Token, id int64) *base.In
 	}
 	affected, err := service.MessagePersist.SetRead(token.UserId, m.Id)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	//如果信息已经被读取，那么读取下一条
@@ -73,6 +82,7 @@ func (service *SimpleMessageService) GetMessage(token *Token, id int64) *base.In
 func (service *SimpleMessageService) sendMessage(token *Token, message *Message) *base.Info {
 	u, err := service.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -80,6 +90,7 @@ func (service *SimpleMessageService) sendMessage(token *Token, message *Message)
 	}
 	u, err = service.UserPersist.GetById(message.ToUser)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -90,6 +101,7 @@ func (service *SimpleMessageService) sendMessage(token *Token, message *Message)
 	message.FromUser = token.UserId
 	err = service.MessagePersist.Save(&message.Message)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	return base.Success
@@ -98,8 +110,9 @@ func (service *SimpleMessageService) SendTxtMessage(token *Token, message *Messa
 	return service.sendMessage(token, message)
 }
 func (service *SimpleMessageService) SendBinaryMessage(token *Token, message *Message, content *[]byte, suffix string) *base.Info {
-	id, err := service.StoreService.Save("store/message/send/"+fmt.Sprint(token.UserId), content, suffix)
+	id, err := service.StoreService.Save("message/send/"+fmt.Sprint(token.UserId), content, suffix)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	message.Url = &id

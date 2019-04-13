@@ -29,19 +29,26 @@ func main() {
 
 	//helper
 	tokenHelper := &service.TokenHelper{Rds: redisPool}
-	simpleTokenService := &service.SimpleTokenService{Pool: redisPool, Ex: time.Second * 60 * 60 * 3}
+	simpleTokenService := &service.SimpleTokenService{Pool: redisPool, Ex: time.Second * 60 * 60 * 24}
 	//persist
 	userPersist := entity.NewUserPersist(db)
 	storePersist := entity.NewStorePersist(db)
 	userVideoPersist := entity.NewUserVideoPersist(db)
 	messagePersist := entity.NewMessagePersist(db)
+	postCommentPersist := entity.NewPostCommentPersist(db)
+	postAttachPersist := entity.NewPostAttachPersist(db)
+	userPostPersist := entity.NewUserPostPersist(db)
+	postsPersist:=entity.NewPostsPersist(db)
 	//security
 	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
 	//service
 	storeService := &service.LocalStoreService{Path: "store", Type: "LOCAL", StorePersist: storePersist}
 	userInfo := &service.UserInfo{UserPersist: userPersist, StoreService: storeService}
 	videoService := &service.SimpleVideoService{StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
-	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist}
+	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist, StoreService: storeService}
+	userPostService := &service.SimpleUserPostService{PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
+	postAttachService:=&service.SimplePostAttachService{PostAttachPersist:postAttachPersist,StoreService:storeService}
+	postService:=&service.SimplePostService{PostsPersist:postsPersist,PostAttachPersist:postAttachPersist}
 	//SmsController
 	smsController := &controller.SmsController{}
 	smsController.Security = security
@@ -54,8 +61,11 @@ func main() {
 	signature := &controller.Signature{TokenHolder: tokenHolder, UserInfo: userInfo}
 	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 3}
 	videoController := &controller.VideoController{VideoService: videoService, TokenHolder: tokenHolder, Limit: 50}
+	userPostsController := &controller.UserPostsController{UserPostService: userPostService, TokenHolder: tokenHolder, StoreService: storeService, Limit: 10, MaxAttach: 10}
+	postAttachController:=&controller.PostAttachController{TokenHolder:tokenHolder,PostAttachService:postAttachService}
+	postsController:=&controller.PostsController{PostService:postService,TokenHolder:tokenHolder}
 	//iMessage
-	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder}
+	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder, Limit: 10}
 	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 5}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
@@ -68,6 +78,9 @@ func main() {
 	ns.Router("/video", videoController)
 	ns.Router("/message", iMessage)
 	ns.Router("/message/attach", iMessageAttachController)
+	ns.Router("/user/posts", userPostsController)
+	ns.Router("/posts/attach", postAttachController)
+	ns.Router("/posts", postsController)
 	beego.AddNamespace(ns)
 	beego.Run()
 }

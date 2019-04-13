@@ -10,9 +10,6 @@ type User struct {
 	*entity.User `json:"user"`
 	Token        *Token             `json:"token"`
 	UserPersist  entity.UserPersist `json:"-"`
-
-	*entity.UserExtraInfo `json:"userExtraInfo"`
-	UserExtraInfoPersist  entity.UserExtraInfoPersist `json:"-"`
 }
 
 func (user *User) GetIcon() []byte {

@@ -31,6 +31,7 @@ func (h *TokenHelper) GetToken(token string) (*Token, *base.Info) {
 	if userId == nil {
 		return nil, base.TokenExpired
 	}
+	go h.Rds.Get().Do("expire", token,time.Second * 60 * 60 * 24)
 	return &Token{Token: token, UserId: helper.Int2int64(userId.([]uint8))}, base.Success
 }
 

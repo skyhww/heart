@@ -3,6 +3,7 @@ package entity
 import (
 	"time"
 	"github.com/jmoiron/sqlx"
+	"database/sql"
 )
 
 type Message struct {
@@ -36,19 +37,19 @@ type MessagePersist interface {
 	//SaveStreamMessage(message *Message) error
 	GetUnreadCount(userId int64) (int, error)
 	SetRead(userId, messageId int64) (int64, error)
-	GetMessage(userId, messageId int64)(*Message,error)
+	GetMessage(userId, messageId int64) (*Message, error)
 }
 
 type MessageDao struct {
 	DB *sqlx.DB
 }
 
-func NewMessagePersist(DB *sqlx.DB)MessagePersist{
-	return &MessageDao{DB:DB}
+func NewMessagePersist(DB *sqlx.DB) MessagePersist {
+	return &MessageDao{DB: DB}
 }
 func (messageDao *MessageDao) SetRead(userId, messageId int64) (int64, error) {
 	tx := messageDao.DB.MustBegin()
-	r, err := tx.Exec("update message set read=1 where id=? and to_user=? and read=0", messageId, userId)
+	r, err := tx.Exec("update message set `read`=1 where id=? and to_user=? and `read`=0", messageId, userId)
 	if err != nil {
 		tx.Rollback()
 		return 0, err
@@ -64,7 +65,7 @@ func (messageDao *MessageDao) SetRead(userId, messageId int64) (int64, error) {
 
 func (messageDao *MessageDao) Save(message *Message) error {
 	tx := messageDao.DB.MustBegin()
-	r, err := tx.Exec("insert into message(message,from_user,to_user,read,create_time,url) values(:message,:from_user,:to_user,0,:create_time,:url)", message)
+	r, err := tx.NamedExec("insert into message (message,from_user,to_user,`read`,create_time,url) values(:message,:from_user,:to_user,0,:create_time,:url)", message)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -79,24 +80,30 @@ func (messageDao *MessageDao) Save(message *Message) error {
 
 func (messageDao *MessageDao) GetUnreadMessage(userId, lastId int64) (*Message, error) {
 	m := &Message{}
-	err := messageDao.DB.Select(m, "select * from message where to_user=?  and id>?  and read=0 order by create_time desc limit 1", userId, lastId)
-	if err != nil {
+	err := messageDao.DB.Get(m, "select id,message,from_user,to_user,create_time,url from message where to_user=?  and id>?  and `read`=0 order by create_time desc limit 1", userId, lastId)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
+	}
+	if err == sql.ErrNoRows{
+		return nil,nil
 	}
 	return m, nil
 }
-func (messageDao *MessageDao) GetMessage(userId, messageId int64)(*Message,error) {
+func (messageDao *MessageDao) GetMessage(userId, messageId int64) (*Message, error) {
 	m := &Message{}
-	err := messageDao.DB.Select(m, "select * from message where to_user=?  and id=? ", userId, messageId)
-	if err != nil {
+	err := messageDao.DB.Get(m, "select id,message,from_user,to_user,create_time,url from message where to_user=?  and id=? ", userId, messageId)
+	if err != nil && err != sql.ErrNoRows {
 		return nil, err
+	}
+	if err == sql.ErrNoRows{
+		return nil,nil
 	}
 	return m, nil
 }
 func (messageDao *MessageDao) GetUnreadCount(userId int64) (int, error) {
 	m := 0
-	err := messageDao.DB.Select(m, "select count(id) from message where to_user=? order by create_time desc")
-	if err != nil {
+	err := messageDao.DB.Get(m, "select count(id) from message where to_user=? order by create_time desc")
+	if err != nil && err != sql.ErrNoRows{
 		return 0, err
 	}
 	return m, nil

@@ -25,12 +25,27 @@ type LocalStoreService struct {
 	Type         string
 }
 
+func (localStoreService *LocalStoreService) createDirIfNotExist(dir string) error {
+	_, err := os.Stat(dir)
+	if err == nil {
+		return nil
+	}
+	if os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 600)
+	}
+	return err
+}
+
 func (localStoreService *LocalStoreService) Save(nameSpace string, content *[]byte, suffix string) (string, error) {
 	uid, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 	url := uid.String()
+	err = localStoreService.createDirIfNotExist(localStoreService.Path + "/" + nameSpace)
+	if err != nil {
+		return "", err
+	}
 	f, err := os.Create(localStoreService.Path + "/" + nameSpace + "/" + url)
 	if f == nil || err != nil {
 		return "", err
@@ -61,7 +76,7 @@ func (localStoreService *LocalStoreService) Get(nameSpace string, url string) ([
 	if err != nil {
 		return nil, "", err
 	}
-	return b, url+s.Suffix, nil
+	return b, url + s.Suffix, nil
 }
 
 func (localStoreService *LocalStoreService) GetType() string {
