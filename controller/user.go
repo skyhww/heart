@@ -21,9 +21,9 @@ type UserInfoInput struct {
 	//用户名
 	Name *string `json:"name"`
 	//头像
-	Icon *string `json:"name"`
+	Icon *string `json:"icon"`
 	//签名
-	Signature *string `json:"name"`
+	Signature *string `json:"signature"`
 }
 
 func (userInfoInput *UserInfoInput) ValidateName() *base.Info {
@@ -114,8 +114,8 @@ func (user *Icon) Get() {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "0")
-	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Expires", "31536000")
+	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	user.Ctx.ResponseWriter.Write(*b)
 }

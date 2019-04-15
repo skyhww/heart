@@ -17,6 +17,7 @@ type User struct {
 	Enable     int        `db:"enable" json:"-"`
 	Password   *string    `db:"password" json:"-"`
 }
+
 type UserPersist interface {
 	Save(user *User) bool
 	Get(mobile string) (*User, error)
