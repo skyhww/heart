@@ -23,9 +23,9 @@ import (
 func  init()  {
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin"},
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin"},
 		AllowCredentials: true,
 	}))
 }
@@ -85,12 +85,14 @@ func main() {
 	ns.Router("/user/info/name", userName)
 	ns.Router("/user/info/signature", signature)
 	ns.Router("/user/info/icon", icon)
-	ns.Router("/video", videoController)
+	ns.Router("/video/:id", videoController)
 	ns.Router("/message", iMessage)
-	ns.Router("/message/attach", iMessageAttachController)
+	ns.Router("/message/:id/attach", iMessageAttachController)
 	ns.Router("/user/posts", userPostsController)
 	ns.Router("/posts/attach", postAttachController)
+	ns.Router("/posts/:posts_id/attach", postAttachController)
 	ns.Router("/posts", postsController)
+
 	beego.AddNamespace(ns)
 	beego.Run()
 }

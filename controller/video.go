@@ -28,6 +28,7 @@ func (videoController *VideoController) Put() {
 	if !info.IsSuccess() {
 		return
 	}
+	content:=videoController.GetString("content")
 	f, h, err := videoController.GetFile("video")
 	if err != nil {
 		logs.Error(err)
@@ -51,7 +52,7 @@ func (videoController *VideoController) Put() {
 		info = common.FileRequired
 		return
 	}
-	info=videoController.VideoService.PushVideo(t,&b,ext)
+	info=videoController.VideoService.PushVideo(t,&b,ext,content)
 }
 
 
@@ -83,8 +84,8 @@ func (videoController *VideoController) Get()  {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "0")
-	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Expires", "31536000")
+	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	videoController.Ctx.ResponseWriter.Write(*b)
 }

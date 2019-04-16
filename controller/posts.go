@@ -170,11 +170,33 @@ func (postAttachController *PostAttachController) Get() {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "0")
-	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Expires", "31536000")
+	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	postAttachController.Ctx.ResponseWriter.Write(*b)
 }
+
+func (postAttachController *PostAttachController) GetPage() {
+	info := base.Success
+	defer func() {
+		postAttachController.Data["json"] = info
+		postAttachController.ServeJSON()
+	}()
+	id, err := postAttachController.GetInt64("posts_id", -1)
+	if err != nil || id == -1 {
+		info = common.RequestDataRequired
+		return
+	}
+	t, info := postAttachController.TokenHolder.GetToken(&postAttachController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	info, b, name := postAttachController.PostAttachService.GetAttach(t, id)
+	if !info.IsSuccess() {
+		return
+	}
+}
+
 
 type PostsController struct {
 	beego.Controller
@@ -202,6 +224,7 @@ func (postsController *PostsController) Get() {
 		info = common.RequestDataRequired
 		return
 	}
+	keyword:= postsController.GetString("keyword", "")
 	page := &base.Page{PageSize: pageSize, PageNo: pageNo}
-	info = postsController.PostService.GetPosts(t, page)
+	info = postsController.PostService.GetPosts(keyword,t, page)
 }

@@ -11,7 +11,7 @@ type Video struct {
 	entity.UserVideo
 }
 type VideoService interface {
-	PushVideo(token *Token, content *[]byte, suffix string) *base.Info
+	PushVideo(token *Token, content *[]byte, suffix,title string) *base.Info
 	RemoveVideo(token *Token, id int64) *base.Info
 	GetVideo(token *Token, id int64) (*base.Info, *[]byte, string)
 }
@@ -21,7 +21,7 @@ type SimpleVideoService struct {
 	UserPersist      entity.UserPersist
 }
 
-func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix string) *base.Info {
+func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix,title string) *base.Info {
 	u, err := video.UserPersist.GetById(token.UserId)
 	if err != nil {
 		return base.ServerError
@@ -37,7 +37,8 @@ func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix
 	now := time.Now()
 	c := crc32.NewIEEE()
 	hash := string(c.Sum(*content))
-	userVideo := &entity.UserVideo{UserId: u.Id, StoreType: video.StoreService.GetType(), CreateTime: &now, Url: id, Hash: hash}
+	ty:=video.StoreService.GetType()
+	userVideo := &entity.UserVideo{UserId: u.Id, StoreType: &ty, CreateTime: &now, Url: &id, Hash: &hash,Content:&title}
 	err = video.UserVideoPersist.Save(userVideo)
 	if err != nil {
 		return base.ServerError
@@ -71,7 +72,7 @@ func (video *SimpleVideoService) GetVideo(token *Token, id int64) (*base.Info, *
 	if err != nil {
 		return base.ServerError, nil, ""
 	}
-	b, n, err := video.StoreService.Get("video", v.Url)
+	b, n, err := video.StoreService.Get("video", *v.Url)
 	if err != nil {
 		return base.ServerError, nil, ""
 	}

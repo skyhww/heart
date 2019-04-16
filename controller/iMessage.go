@@ -160,8 +160,8 @@ func (iMessageAttachController *IMessageAttachController) Get() {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "0")
-	output.Header("Cache-Control", "must-revalidate")
+	output.Header("Expires", "31536000")
+	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	iMessageAttachController.Ctx.ResponseWriter.Write(*b)
 }

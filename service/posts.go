@@ -12,14 +12,14 @@ type Post struct {
 }
 
 type PostService interface {
-	GetPosts(token *Token, page *base.Page) *base.Info
+	GetPosts(keyword string,token *Token, page *base.Page) *base.Info
 }
 type SimplePostService struct {
 	PostsPersist      entity.PostsPersist
 	PostAttachPersist entity.PostAttachPersist
 }
 
-func (simplePostService *SimplePostService) GetPosts(token *Token, page *base.Page) *base.Info {
+func (simplePostService *SimplePostService) GetPosts(keyword string,token *Token, page *base.Page) *base.Info {
 	err := simplePostService.PostsPersist.Get(page)
 	if err != nil {
 		return base.ServerError
@@ -36,8 +36,6 @@ func (simplePostService *SimplePostService) GetPosts(token *Token, page *base.Pa
 			(*data)[index].Attach = attachPage
 		}
 	}
-	return base.NewSuccess(page)
-
 	return base.NewSuccess(page)
 }
 

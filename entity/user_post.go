@@ -59,7 +59,7 @@ type PostAttachPersist interface {
 }
 
 type PostsPersist interface {
-	Get(page *base.Page) error
+	Get(keyword string,page *base.Page) error
 }
 type PostsDao struct {
 	DB *sqlx.DB
@@ -68,7 +68,7 @@ func NewPostsPersist(db *sqlx.DB)PostsPersist{
 	return &PostsDao{DB:db}
 }
 
-func (postsDao *PostsDao) Get(page *base.Page) error {
+func (postsDao *PostsDao) Get(keyword string,page *base.Page) error {
 	post := &[]UserPost{}
 	count := 0
 	page.Data = post
@@ -78,7 +78,7 @@ func (postsDao *PostsDao) Get(page *base.Page) error {
 	}
 	page.Count = count
 	if count != 0 {
-		err = postsDao.DB.Select(post, "select id,user_id,content,create_time from user_post where  enable=1 order by create_time desc limit ?,?", (page.PageNo-1)*page.PageSize, page.PageSize)
+		err = postsDao.DB.Select(post, "select id,user_id,content,create_time from user_post where  enable=1   order by create_time desc limit ?,?", (page.PageNo-1)*page.PageSize, page.PageSize)
 		if err != nil {
 			return err
 		}
