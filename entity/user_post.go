@@ -39,8 +39,8 @@ type PostComment struct {
 
 type PostCommentPersist interface {
 	Save(postComment *PostComment) error
-	//一级评论
-	GetComments(post *UserPost, page *base.Page) error
+
+	GetComments(post *UserPost) (*[]PostComment, error)
 	//评论回复
 	GetReply(comments *PostComment, page *base.Page) error
 	//删除评论
@@ -59,16 +59,17 @@ type PostAttachPersist interface {
 }
 
 type PostsPersist interface {
-	Get(keyword string,page *base.Page) error
+	Get(keyword string, page *base.Page) error
 }
 type PostsDao struct {
 	DB *sqlx.DB
 }
-func NewPostsPersist(db *sqlx.DB)PostsPersist{
-	return &PostsDao{DB:db}
+
+func NewPostsPersist(db *sqlx.DB) PostsPersist {
+	return &PostsDao{DB: db}
 }
 
-func (postsDao *PostsDao) Get(keyword string,page *base.Page) error {
+func (postsDao *PostsDao) Get(keyword string, page *base.Page) error {
 	post := &[]UserPost{}
 	count := 0
 	page.Data = post
@@ -95,7 +96,7 @@ func NewPostCommentPersist(db *sqlx.DB) PostCommentPersist {
 }
 func (postCommentDao *PostCommentDao) Save(postComment *PostComment) error {
 	tx := postCommentDao.DB.MustBegin()
-	r, err := tx.Exec("insert into post_comment(user_id,create_time,enable,content,post_id,reply_id) values(:user_id,:create_time,:enable,:content,:post_id,:reply_id)", postComment)
+	r, err := tx.Exec("insert into post_comment(user_id,create_time,enable,content,post_id,reply_id) values(:user_id,:create_time,1,:content,:post_id,:reply_id)", postComment)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -107,13 +108,16 @@ func (postCommentDao *PostCommentDao) Save(postComment *PostComment) error {
 	postComment.Id, _ = r.LastInsertId()
 	return nil
 }
-func (postCommentDao *PostCommentDao) GetComments(post *UserPost, page *base.Page) error {
+func (postCommentDao *PostCommentDao) GetComments(post *UserPost) (*[]PostComment, error) {
 	p := &[]PostComment{}
-	err := postCommentDao.DB.Select(p, "select * from post_comment where post_id=? and reply_id is null order by create_time desc limit  ?,?", post.Id, page.PageSize*page.PageNo, page.PageSize)
-	if err != nil {
-		return err
+	err := postCommentDao.DB.Select(p, "select * from post_comment where post_id=?   order by create_time desc", post.Id)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
 	}
-	return nil
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return p, nil
 }
 func (postCommentDao *PostCommentDao) Delete(comment *PostComment) error {
 	tx := postCommentDao.DB.MustBegin()

@@ -53,3 +53,4 @@ func (holder *TokenHolder) ReadJsonBody(controller *beego.Controller, target int
 	}
 	return info
 }
+

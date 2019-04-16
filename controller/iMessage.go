@@ -10,19 +10,6 @@ import (
 	"io/ioutil"
 )
 
-type MessageRequest struct {
-	Message *string `json:"message"`
-	ToUser  int64   `json:"to_user"`
-	Url     *string `db:"url" json:"url"`
-}
-
-func (messageRequest *MessageRequest) ValidateMessage() *base.Info {
-	if messageRequest.ToUser == 0 {
-		logs.Warn("接收人为空！")
-		return common.IllegalRequestDataFormat
-	}
-	return base.Success
-}
 
 type IMessageController struct {
 	beego.Controller
@@ -53,7 +40,7 @@ func (iMessageController *IMessageController) Get() {
 //文本消息
 func (iMessageController *IMessageController) putText(t *service.Token, toUser int64) *base.Info {
 	info := base.Success
-	m := &MessageRequest{}
+	m := &common.MessageRequest{}
 	info = iMessageController.TokenHolder.ReadJsonBody(&iMessageController.Controller, m)
 	if !info.IsSuccess() {
 		return info

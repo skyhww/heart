@@ -12,14 +12,14 @@ type Post struct {
 }
 
 type PostService interface {
-	GetPosts(keyword string,token *Token, page *base.Page) *base.Info
+	GetPosts(keyword string, token *Token, page *base.Page) *base.Info
 }
 type SimplePostService struct {
 	PostsPersist      entity.PostsPersist
 	PostAttachPersist entity.PostAttachPersist
 }
 
-func (simplePostService *SimplePostService) GetPosts(keyword string,token *Token, page *base.Page) *base.Info {
+func (simplePostService *SimplePostService) GetPosts(keyword string, token *Token, page *base.Page) *base.Info {
 	err := simplePostService.PostsPersist.Get(page)
 	if err != nil {
 		return base.ServerError
@@ -40,7 +40,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string,token *Token
 }
 
 type UserPostService interface {
-	GetComments(postId int64, page *base.Page) *base.Info
+	GetComments(postId int64) *base.Info
 	//添加评论
 	AddComment(token *Token, comment *Comment) *base.Info
 	//添加回复
@@ -53,6 +53,8 @@ type UserPostService interface {
 	DeletePosts(token *Token, id int64) *base.Info
 	//
 	GetPosts(token *Token, page *base.Page) *base.Info
+	//删除评论
+	DeleteComment(token *Token, id int64) *base.Info
 }
 
 type Comment struct {
@@ -95,12 +97,29 @@ func (simplePostService *SimpleUserPostService) GetPosts(token *Token, page *bas
 	return base.NewSuccess(page)
 }
 
-func (simplePostService *SimpleUserPostService) GetComments(postId int64, page *base.Page) *base.Info {
-	err := simplePostService.PostCommentPersist.GetComments(&entity.UserPost{Id: postId}, page)
+func (simplePostService *SimpleUserPostService) GetComments(postId int64) *base.Info {
+	c, err := simplePostService.PostCommentPersist.GetComments(&entity.UserPost{Id: postId})
 	if err != nil {
 		return base.ServerError
 	}
-	return base.NewSuccess(page)
+	return base.NewSuccess(c)
+
+}
+
+func (simplePostService *SimpleUserPostService) DeleteComment(token *Token, id int64) *base.Info {
+	u, err := simplePostService.UserPersist.GetById(token.UserId)
+	if err != nil {
+		logs.Error(err)
+		return base.ServerError
+	}
+	if u == nil {
+		return base.NoUserFound
+	}
+	err = simplePostService.PostCommentPersist.Delete(&entity.PostComment{Id: id})
+	if err != nil {
+		return base.ServerError
+	}
+	return base.Success
 
 }
 func (simplePostService *SimpleUserPostService) AddComment(token *Token, comment *Comment) *base.Info {

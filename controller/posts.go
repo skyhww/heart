@@ -127,17 +127,77 @@ func (postsController *UserPostsController) Get() {
 type CommentController struct {
 	beego.Controller
 	PostService service.UserPostService
+	TokenHolder *common.TokenHolder
 }
 
+//发评论
 func (commentController *CommentController) Put() {
-
+	info := base.Success
+	defer func() {
+		commentController.Data["json"] = info
+		commentController.ServeJSON()
+	}()
+	t, info := commentController.TokenHolder.GetToken(&commentController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	id, err := commentController.GetInt64("post_id", -1)
+	if err != nil || id == -1 {
+		info = common.IllegalRequest
+		return
+	}
+	replayId, err := commentController.GetInt64("id", -1)
+	if err != nil {
+		info = common.IllegalRequest
+		return
+	}
+	msg := common.MessageRequest{}
+	info = commentController.TokenHolder.ReadJsonBody(&commentController.Controller, &msg)
+	if !info.IsSuccess() {
+		return
+	}
+	if msg.Message == nil {
+		info = common.MessageRequired
+		return
+	}
+	c := service.Comment{}
+	c.Content = *msg.Message
+	c.PostId = id
+	if replayId != -1 {
+		c.ReplyId = replayId
+	}
+	info = commentController.PostService.AddComment(t, &c)
 }
 
 func (commentController *CommentController) Delete() {
-
+	info := base.Success
+	defer func() {
+		commentController.Data["json"] = info
+		commentController.ServeJSON()
+	}()
+	t, info := commentController.TokenHolder.GetToken(&commentController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	id, err := commentController.GetInt64("id", -1)
+	if err != nil || id == -1 {
+		info = common.IllegalRequest
+		return
+	}
+	info = commentController.PostService.DeleteComment(t, id)
 }
 func (commentController *CommentController) Get() {
-
+	info := base.Success
+	defer func() {
+		commentController.Data["json"] = info
+		commentController.ServeJSON()
+	}()
+	id, err := commentController.GetInt64("post_id", -1)
+	if err != nil || id == -1 {
+		info = common.IllegalRequest
+		return
+	}
+	info = commentController.PostService.GetComments(id)
 }
 
 type PostAttachController struct {
@@ -197,7 +257,6 @@ func (postAttachController *PostAttachController) GetPage() {
 	}
 }
 
-
 type PostsController struct {
 	beego.Controller
 	PostService service.PostService
@@ -224,7 +283,7 @@ func (postsController *PostsController) Get() {
 		info = common.RequestDataRequired
 		return
 	}
-	keyword:= postsController.GetString("keyword", "")
+	keyword := postsController.GetString("keyword", "")
 	page := &base.Page{PageSize: pageSize, PageNo: pageNo}
-	info = postsController.PostService.GetPosts(keyword,t, page)
+	info = postsController.PostService.GetPosts(keyword, t, page)
 }
