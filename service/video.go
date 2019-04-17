@@ -53,7 +53,7 @@ func (video *SimpleVideoService) RemoveVideo(token *Token, id int64) *base.Info 
 	if u == nil {
 		return base.NoUserFound
 	}
-	err = video.UserVideoPersist.Delete(&entity.UserVideo{Id: id})
+	err = video.UserVideoPersist.Delete(&entity.UserVideo{Id: id,UserId:token.UserId})
 	if err != nil {
 		return base.ServerError
 	}

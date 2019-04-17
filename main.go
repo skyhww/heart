@@ -20,7 +20,7 @@ import (
 	"github.com/astaxie/beego/plugins/cors"
 )
 
-func  init()  {
+func init() {
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"*"},
@@ -48,7 +48,9 @@ func main() {
 	postCommentPersist := entity.NewPostCommentPersist(db)
 	postAttachPersist := entity.NewPostAttachPersist(db)
 	userPostPersist := entity.NewUserPostPersist(db)
-	postsPersist:=entity.NewPostsPersist(db)
+	postsPersist := entity.NewPostsPersist(db)
+	userFollowInfoPersist := entity.NewUserFollowInfoPersist(db)
+	userCollectionInfoPersist := entity.NewUserCollectionInfoPersist(db)
 	//security
 	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
 	//service
@@ -57,8 +59,10 @@ func main() {
 	videoService := &service.SimpleVideoService{StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
 	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist, StoreService: storeService}
 	userPostService := &service.SimpleUserPostService{PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
-	postAttachService:=&service.SimplePostAttachService{PostAttachPersist:postAttachPersist,StoreService:storeService}
-	postService:=&service.SimplePostService{PostsPersist:postsPersist,PostAttachPersist:postAttachPersist}
+	postAttachService := &service.SimplePostAttachService{PostAttachPersist: postAttachPersist, StoreService: storeService}
+	postService := &service.SimplePostService{PostsPersist: postsPersist, PostAttachPersist: postAttachPersist}
+	userFollowService := &service.SimpleUserFollowService{UserPersist: userPersist, UserFollowInfoPersist: userFollowInfoPersist}
+	collectorService := &service.SimpleCollectorService{UserCollectionInfoPersist: userCollectionInfoPersist, UserPersist: userPersist}
 	//SmsController
 	smsController := &controller.SmsController{}
 	smsController.Security = security
@@ -72,8 +76,11 @@ func main() {
 	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 3}
 	videoController := &controller.VideoController{VideoService: videoService, TokenHolder: tokenHolder, Limit: 50}
 	userPostsController := &controller.UserPostsController{UserPostService: userPostService, TokenHolder: tokenHolder, StoreService: storeService, Limit: 10, MaxAttach: 10}
-	postAttachController:=&controller.PostAttachController{TokenHolder:tokenHolder,PostAttachService:postAttachService}
-	postsController:=&controller.PostsController{PostService:postService,TokenHolder:tokenHolder}
+	postAttachController := &controller.PostAttachController{TokenHolder: tokenHolder, PostAttachService: postAttachService}
+	postsController := &controller.PostsController{PostService: postService, TokenHolder: tokenHolder}
+	relationController := &controller.RelationController{TokenHolder: tokenHolder, UserFollowService: userFollowService}
+	userCollectorController := &controller.UserCollectorController{TokenHolder: tokenHolder, CollectorService: collectorService}
+	commentController:=&controller.CommentController{PostService:userPostService,TokenHolder:tokenHolder}
 	//iMessage
 	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder, Limit: 10}
 	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 5}
@@ -89,9 +96,18 @@ func main() {
 	ns.Router("/message", iMessage)
 	ns.Router("/message/:id/attach", iMessageAttachController)
 	ns.Router("/user/posts", userPostsController)
-	ns.Router("/posts/attach", postAttachController)
-	ns.Router("/posts/:posts_id/attach", postAttachController)
+
 	ns.Router("/posts", postsController)
+
+	ns.Router("/posts/attach/:id", postAttachController,"get:Get")
+	ns.Router("/posts/:posts_id/attach", postAttachController,"get:GetPage")
+
+	ns.Router("/comment/:id/comment", commentController,"put:Replay")
+	ns.Router("/posts/:post_id/comment", commentController)
+	ns.Router("/comment/:id", commentController,"delete:Delete")
+	ns.Router("/relation/:user_id", relationController)
+	ns.Router("/post_collector/:posts_id", userCollectorController)
+
 
 	beego.AddNamespace(ns)
 	beego.Run()

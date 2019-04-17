@@ -1,4 +1,5 @@
 package entity
+/**
 
 import (
 	"time"
@@ -26,6 +27,9 @@ type UserRelationPersist interface {
 	Delete(relation *UserRelation) error
 
 	Get(id int64) (*UserRelation, error)
+
+	FollowedCount()
+	UserFollowInfoPersist
 }
 
 type RelationDao struct {
@@ -99,3 +103,4 @@ func (relationDao *RelationDao) Get(id int64) (*UserRelation, error) {
 	}
 	return r, nil
 }
+**/

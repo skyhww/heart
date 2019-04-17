@@ -24,40 +24,55 @@ type UserFollowInfoPersist interface {
 	//取消关注
 	DeleteUserFollowInfo(from, to int64) error
 	//获取粉丝
-	GetFollowed(userId *UserFollowInfo, page *base.Page) error
+	GetFollowed(userId int64, page *base.Page) error
+
+	GetFollowedCount(userId int64) (int, error)
+	GetFollowCount(userId int64) (int, error)
 }
 
 type UserFollowInfoDao struct {
 	DB *sqlx.DB
 }
 
+func NewUserFollowInfoPersist(db *sqlx.DB)  UserFollowInfoPersist{
+	return &UserFollowInfoDao{DB:db}
+}
+
 func (userFollowInfoDao *UserFollowInfoDao) Save(userFollowInfo *UserFollowInfo) error {
 	tx := userFollowInfoDao.DB.MustBegin()
-	r, err := tx.Exec("insert into user_follow_info(user_id,follow_user_id,create_time,enable) values(:user_id,:follow_user_id,:create_time,1)", userFollowInfo)
+	r, err := tx.NamedExec("update user_follow_info set enable=1,create_time=:create_time  where user_id=:user_id and follow_user_id=:follow_user_id", userFollowInfo)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	err = tx.Commit()
+	rows, err := r.RowsAffected()
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
-	id, _ := r.LastInsertId()
-	userFollowInfo.UserId = id
-	return nil
+	if rows == 1 {
+		return tx.Commit()
+	} else {
+		_, err := tx.NamedExec("insert into user_follow_info(user_id,follow_user_id,create_time,enable) values(:user_id,:follow_user_id,:create_time,1)", userFollowInfo)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		return tx.Commit()
+	}
 }
 func (userFollowInfoDao *UserFollowInfoDao) GetFollowUsers(userId int64, page *base.Page) error {
 	info := &[]UserFollowInfo{}
 	count := 0
 	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where user_id=? and enable=1 ", userId)
-	if err != nil&&err!=sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	if count == 0 {
 		return nil
 	}
-	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where user_id=? and enable=1 order by create_time desc limit ?,?", userId,page.PageSize*page.PageNo,page.PageSize)
-	if err != nil&&err!=sql.ErrNoRows {
+	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*page.PageNo, page.PageSize)
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	page.Count = count / page.PageSize
@@ -65,30 +80,48 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowUsers(userId int64, page *b
 	return nil
 }
 func (userFollowInfoDao *UserFollowInfoDao) DeleteUserFollowInfo(from, to int64) error {
-	tx:=userFollowInfoDao.DB.MustBegin()
-	_,err:=tx.Exec("update user_follow_info set enable=0 where user_id=? and follow_user_id=?",from,to)
-	if err!=nil{
+	tx := userFollowInfoDao.DB.MustBegin()
+	_, err := tx.Exec("update user_follow_info set enable=0 where user_id=? and follow_user_id=?", from, to)
+	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	return nil
+	return tx.Commit()
 
 }
-func (userFollowInfoDao *UserFollowInfoDao) GetFollowed(userId *UserFollowInfo, page *base.Page) error {
+func (userFollowInfoDao *UserFollowInfoDao) GetFollowed(userId int64, page *base.Page) error {
 	info := &[]UserFollowInfo{}
 	count := 0
 	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where follow_user_id=? and enable=1 ", userId)
-	if err != nil&&err!=sql.ErrNoRows {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	if count == 0 {
 		return nil
 	}
-	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where follow_user_id=? and enable=1 order by create_time desc limit ?,?", userId,page.PageSize*page.PageNo,page.PageSize)
-	if err != nil&&err!=sql.ErrNoRows {
+	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where follow_user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*page.PageNo, page.PageSize)
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
-	page.Count = count / page.PageSize
+	page.Count = count
 	page.Data = info
 	return nil
+}
+func (userFollowInfoDao *UserFollowInfoDao) GetFollowedCount(userId int64) (int, error) {
+	count := 0
+	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where follow_user_id=? and enable=1 ", userId)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	return count, nil
+}
+func (userFollowInfoDao *UserFollowInfoDao) GetFollowCount(userId int64) (int, error) {
+	count := 0
+	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where user_id=? and enable=1 ", userId)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+	return count, nil
+
 }

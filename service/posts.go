@@ -152,9 +152,27 @@ func (simplePostService *SimpleUserPostService) GetReplay(comment *Comment, page
 	return base.NewSuccess(comment)
 }
 func (simplePostService *SimpleUserPostService) AddReplay(token *Token, comment *Comment) *base.Info {
+	u, err := simplePostService.UserPersist.GetById(token.UserId)
+	if err != nil {
+		logs.Error(err)
+		return base.ServerError
+	}
+	if u == nil {
+		return base.NoUserFound
+	}
 	now := time.Now()
-	comment.PostComment.CreateTime = &now
-	err := simplePostService.PostCommentPersist.GetReply(&comment.PostComment, nil)
+	comment.CreateTime = &now
+	c, err := simplePostService.PostCommentPersist.Get(comment.ReplyId)
+	if err != nil {
+		logs.Error(err)
+		return base.ServerError
+	}
+	if c == nil {
+		return base.CommentNotFound
+	}
+	comment.UserId = token.UserId
+	comment.PostId = c.PostId
+	err = simplePostService.PostCommentPersist.Save(&comment.PostComment)
 	if err != nil {
 		logs.Error(err)
 		return base.ServerError

@@ -13,8 +13,9 @@ import (
 
 type User struct {
 	beego.Controller
-	Service     service.Security
-	TokenHolder *common.TokenHolder
+	Service         service.Security
+	TokenHolder     *common.TokenHolder
+	UserInfoService service.UserInfoService
 }
 
 type UserInfoInput struct {
@@ -79,11 +80,12 @@ func (user *User) Get() {
 		user.Data["json"] = info
 		user.ServeJSON()
 	}()
-	u, info := user.TokenHolder.GetUser(&user.Controller)
-	if !info.IsSuccess() {
+	id, err := user.GetInt64("id")
+	if err != nil {
+		info = common.IllegalRequest
 		return
 	}
-	info.Data = u
+	info = user.UserInfoService.GetUserInfo(id)
 }
 
 type Icon struct {
@@ -101,20 +103,31 @@ func (user *Icon) Get() {
 			user.ServeJSON()
 		}
 	}()
-	t, info := user.TokenHolder.GetToken(&user.Controller)
+
+	id, err := user.GetInt64("id", -1)
+	if err != nil {
+		info = common.IllegalRequest
+		return
+	}
+	if id == -1 {
+		t, _ := user.TokenHolder.GetToken(&user.Controller)
+		if t == nil {
+			info = common.IllegalRequest
+			return
+		}
+		id = t.UserId
+	}
+	info, b, name := user.UserInfo.ReadIcon(id)
 	if !info.IsSuccess() {
 		return
 	}
-	info, b, name := user.UserInfo.ReadIcon(t)
-	if !info.IsSuccess() {
-		return
-	}
+
 	output := user.Ctx.Output
 	output.Header("Content-Disposition", "attachment; filename="+name)
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "31536000")
+	output.Header("Expires", "0")
 	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	user.Ctx.ResponseWriter.Write(*b)

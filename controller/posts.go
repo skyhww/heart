@@ -169,6 +169,36 @@ func (commentController *CommentController) Put() {
 	info = commentController.PostService.AddComment(t, &c)
 }
 
+func (commentController *CommentController) Replay() {
+	info := base.Success
+	defer func() {
+		commentController.Data["json"] = info
+		commentController.ServeJSON()
+	}()
+	t, info := commentController.TokenHolder.GetToken(&commentController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	id, err := commentController.GetInt64("id", -1)
+	if err != nil || id == -1 {
+		info = common.IllegalRequest
+		return
+	}
+	m := &common.MessageRequest{}
+	info = commentController.TokenHolder.ReadJsonBody(&commentController.Controller, m)
+	if !info.IsSuccess() {
+		return
+	}
+	if m.Message == nil || (*m.Message) == "" {
+		info = common.MessageRequired
+		return
+	}
+	c := service.Comment{}
+	c.ReplyId = id
+	c.Content = *m.Message
+	info = commentController.PostService.AddReplay(t, &c)
+}
+
 func (commentController *CommentController) Delete() {
 	info := base.Success
 	defer func() {
@@ -217,11 +247,11 @@ func (postAttachController *PostAttachController) Get() {
 		info = common.RequestDataRequired
 		return
 	}
-	t, info := postAttachController.TokenHolder.GetToken(&postAttachController.Controller)
+	/*t, info := postAttachController.TokenHolder.GetToken(&postAttachController.Controller)
 	if !info.IsSuccess() {
 		return
-	}
-	info, b, name := postAttachController.PostAttachService.GetAttach(t, id)
+	}*/
+	info, b, name := postAttachController.PostAttachService.GetAttach(nil, id)
 	if !info.IsSuccess() {
 		return
 	}
@@ -230,6 +260,7 @@ func (postAttachController *PostAttachController) Get() {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
+	//帖子附件一般不会变更，可缓存
 	output.Header("Expires", "31536000")
 	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")

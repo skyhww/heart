@@ -45,6 +45,8 @@ type PostCommentPersist interface {
 	GetReply(comments *PostComment, page *base.Page) error
 	//删除评论
 	Delete(post *PostComment) error
+
+	Get(id int64) (*PostComment, error)
 }
 
 type UserPostPersist interface {
@@ -94,6 +96,15 @@ type PostCommentDao struct {
 func NewPostCommentPersist(db *sqlx.DB) PostCommentPersist {
 	return &PostCommentDao{DB: db}
 }
+func (postCommentDao *PostCommentDao) Get(id int64) (*PostComment, error) {
+	p := &PostComment{}
+	err := postCommentDao.DB.Get(p, "select * from user_post where id=? ", id)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+	return p, nil
+}
+
 func (postCommentDao *PostCommentDao) Save(postComment *PostComment) error {
 	tx := postCommentDao.DB.MustBegin()
 	r, err := tx.Exec("insert into post_comment(user_id,create_time,enable,content,post_id,reply_id) values(:user_id,:create_time,1,:content,:post_id,:reply_id)", postComment)
