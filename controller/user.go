@@ -127,7 +127,7 @@ func (user *Icon) Get() {
 	output.Header("Content-Description", "File Transfer")
 	output.Header("Content-Type", "application/octet-stream")
 	output.Header("Content-Transfer-Encoding", "binary")
-	output.Header("Expires", "0")
+	output.Header("Expires", "2300000")
 	output.Header("Cache-Control", "public")
 	output.Header("Pragma", "public")
 	user.Ctx.ResponseWriter.Write(*b)

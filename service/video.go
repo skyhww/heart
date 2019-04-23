@@ -11,9 +11,10 @@ type Video struct {
 	entity.UserVideo
 }
 type VideoService interface {
-	PushVideo(token *Token, content *[]byte, suffix,title string) *base.Info
+	PushVideo(token *Token, content *[]byte, suffix, title string) *base.Info
 	RemoveVideo(token *Token, id int64) *base.Info
 	GetVideo(token *Token, id int64) (*base.Info, *[]byte, string)
+	SearchVideo(token *Token, content string, page *base.Page) *base.Info
 }
 type SimpleVideoService struct {
 	StoreService     StoreService
@@ -21,7 +22,7 @@ type SimpleVideoService struct {
 	UserPersist      entity.UserPersist
 }
 
-func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix,title string) *base.Info {
+func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix, title string) *base.Info {
 	u, err := video.UserPersist.GetById(token.UserId)
 	if err != nil {
 		return base.ServerError
@@ -37,8 +38,8 @@ func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix
 	now := time.Now()
 	c := crc32.NewIEEE()
 	hash := string(c.Sum(*content))
-	ty:=video.StoreService.GetType()
-	userVideo := &entity.UserVideo{UserId: u.Id, StoreType: &ty, CreateTime: &now, Url: &id, Hash: &hash,Content:&title}
+	ty := video.StoreService.GetType()
+	userVideo := &entity.UserVideo{UserId: u.Id, StoreType: &ty, CreateTime: &now, Url: &id, Hash: &hash, Content: &title}
 	err = video.UserVideoPersist.Save(userVideo)
 	if err != nil {
 		return base.ServerError
@@ -53,12 +54,28 @@ func (video *SimpleVideoService) RemoveVideo(token *Token, id int64) *base.Info 
 	if u == nil {
 		return base.NoUserFound
 	}
-	err = video.UserVideoPersist.Delete(&entity.UserVideo{Id: id,UserId:token.UserId})
+	err = video.UserVideoPersist.Delete(&entity.UserVideo{Id: id, UserId: token.UserId})
 	if err != nil {
 		return base.ServerError
 	}
 	return base.Success
 }
+
+func (video *SimpleVideoService) SearchVideo(token *Token, content string, page *base.Page) *base.Info {
+	u, err := video.UserPersist.GetById(token.UserId)
+	if err != nil {
+		return base.ServerError
+	}
+	if u == nil {
+		return base.NoUserFound
+	}
+	err = video.UserVideoPersist.SelectByContent(token.UserId, content, page)
+	if err != nil {
+		return base.ServerError
+	}
+	return base.NewSuccess(page)
+}
+
 func (video *SimpleVideoService) GetVideo(token *Token, id int64) (*base.Info, *[]byte, string) {
 	u, err := video.UserPersist.GetById(token.UserId)
 	if err != nil {

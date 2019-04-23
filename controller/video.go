@@ -67,12 +67,12 @@ func (videoController *VideoController) Delete() {
 	if !info.IsSuccess() {
 		return
 	}
-	id,err:=videoController.GetInt64("id",-1)
-	if err!=nil{
-		info=common.IllegalRequestDataFormat
+	id, err := videoController.GetInt64("id", -1)
+	if err != nil {
+		info = common.IllegalRequestDataFormat
 		return
 	}
-	info=videoController.VideoService.RemoveVideo(t,id)
+	info = videoController.VideoService.RemoveVideo(t, id)
 }
 
 func (videoController *VideoController) Get() {
@@ -120,5 +120,21 @@ func (videoController *VideoController) Search() {
 			videoController.Ctx.ResponseWriter.Flush()
 		}
 	}()
-
+	t, info := videoController.TokenHolder.GetToken(&videoController.Controller)
+	if !info.IsSuccess() {
+		return
+	}
+	content := videoController.GetString("content")
+	pageSize, err := videoController.GetInt("page_size", 5)
+	if err != nil {
+		info = common.IllegalRequest
+		return
+	}
+	pageNo, err := videoController.GetInt("page_no", 1)
+	if err != nil {
+		info = common.IllegalRequest
+		return
+	}
+	p := &base.Page{PageNo: pageNo, PageSize: pageSize}
+	info = videoController.VideoService.SearchVideo(t, content, p)
 }

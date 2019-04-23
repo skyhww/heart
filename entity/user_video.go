@@ -3,6 +3,8 @@ package entity
 import (
 	"time"
 	"github.com/jmoiron/sqlx"
+	"heart/service/common"
+	"database/sql"
 )
 
 type UserVideo struct {
@@ -20,6 +22,7 @@ type UserVideoPersist interface {
 	Save(video *UserVideo) error
 	Delete(video *UserVideo) error
 	Get(video *UserVideo) error
+	SelectByContent(userId int64,content string, page *base.Page) error
 }
 
 func NewUserVideoPersist(db *sqlx.DB) UserVideoPersist {
@@ -28,6 +31,22 @@ func NewUserVideoPersist(db *sqlx.DB) UserVideoPersist {
 
 type UserVideoDao struct {
 	db *sqlx.DB
+}
+
+func (userVideoDao *UserVideoDao) SelectByContent(userId int64,content string, page *base.Page) error {
+	count := 0
+	err := userVideoDao.db.Get(&count, "select count(1) from user_video where user_id=? and  content like '%"+content+"%' and enable=1 ",userId)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	u := &[]UserVideo{}
+	page.Count = count
+	err = userVideoDao.db.Select(u, "select * from user_video where user_id=? and  content like '%"+content+"%' and enable=1 order by create_time desc limit ?,?",userId, (page.PageNo-1)*page.PageSize, page.PageSize)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+	page.Data = u
+	return nil
 }
 
 func (userVideoDao *UserVideoDao) Save(video *UserVideo) error {

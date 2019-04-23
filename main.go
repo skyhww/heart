@@ -91,14 +91,17 @@ func main() {
 	ns.Router("/user", userController)
 	ns.Router("/user/info/name", userName)
 	ns.Router("/user/info/signature", signature)
-	ns.Router("/user/info/icon", icon)
-	ns.Router("/video/:id", videoController)
 	ns.Router("/message", iMessage)
 	ns.Router("/message/:id/attach", iMessageAttachController)
 	ns.Router("/user/posts", userPostsController)
 
-	ns.Router("/posts", postsController)
+	ns.Router("/user/:id/icon", icon)
 
+
+	ns.Router("/video", videoController,"get:Search")
+	ns.Router("/video/:id", videoController)
+
+	ns.Router("/posts", postsController)
 	ns.Router("/posts/attach/:id", postAttachController,"get:Get")
 	ns.Router("/posts/:posts_id/attach", postAttachController,"get:GetPage")
 
