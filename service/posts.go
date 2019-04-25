@@ -20,7 +20,7 @@ type SimplePostService struct {
 }
 
 func (simplePostService *SimplePostService) GetPosts(keyword string, token *Token, page *base.Page) *base.Info {
-	err := simplePostService.PostsPersist.Get(page)
+	err := simplePostService.PostsPersist.Get(keyword,page)
 	if err != nil {
 		return base.ServerError
 	}

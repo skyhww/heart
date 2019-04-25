@@ -286,6 +286,16 @@ func (postAttachController *PostAttachController) GetPage() {
 	if !info.IsSuccess() {
 		return
 	}
+	output := postAttachController.Ctx.Output
+	output.Header("Content-Disposition", "attachment; filename="+name)
+	output.Header("Content-Description", "File Transfer")
+	output.Header("Content-Type", "application/octet-stream")
+	output.Header("Content-Transfer-Encoding", "binary")
+	//帖子附件一般不会变更，可缓存
+	output.Header("Expires", "31536000")
+	output.Header("Cache-Control", "public")
+	output.Header("Pragma", "public")
+	postAttachController.Ctx.ResponseWriter.Write(*b)
 }
 
 type PostsController struct {
