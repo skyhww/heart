@@ -10,6 +10,7 @@ type Config struct {
 	RedisConfig    *RedisConfig
 	AliYunConfig   *AliYunConfig
 	DatabaseConfig *DatabaseConfig
+	ElasticConfig  *ElasticConfig
 }
 
 //file: location

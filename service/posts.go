@@ -5,6 +5,7 @@ import (
 	"heart/service/common"
 	"time"
 	"github.com/astaxie/beego/logs"
+	"encoding/json"
 )
 
 type Post struct {
@@ -15,15 +16,35 @@ type PostService interface {
 	GetPosts(keyword string, token *Token, page *base.Page) *base.Info
 }
 type SimplePostService struct {
-	PostsPersist      entity.PostsPersist
-	PostAttachPersist entity.PostAttachPersist
+	PostsPersist         entity.PostsPersist
+	PostAttachPersist    entity.PostAttachPersist
+	ElasticSearchService ElasticSearchService
 }
 
 func (simplePostService *SimplePostService) GetPosts(keyword string, token *Token, page *base.Page) *base.Info {
-	err := simplePostService.PostsPersist.Get(keyword,page)
+	key := make(map[string]interface{})
+	key["content"] = keyword
+	key["enable"] = true
+	bs, err := simplePostService.ElasticSearchService.Query(key, "3dheart", "posts", page)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
+	if len(bs) == 0 {
+		return base.NewSuccess(page)
+	}
+	data := make([]entity.UserPost,0)
+	for _, b := range bs {
+		tmp := &entity.UserPost{}
+		err = json.Unmarshal(b, tmp)
+		if err != nil {
+			logs.Error(err)
+			return base.ServerError
+		}
+		data=append(data, *tmp)
+	}
+	page.Data = &data
+
 	if page.Data != nil {
 		data, _ := page.Data.(*[]entity.UserPost)
 		attachPage := &base.Page{PageNo: 1, PageSize: 5}

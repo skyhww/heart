@@ -54,13 +54,17 @@ func main() {
 	//security
 	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
 	//service
+	elasticSearchService,err:=service.NewElasticSearchService(cfg.ElasticConfig.Host)
+	if err!=nil{
+		panic(err)
+	}
 	storeService := &service.LocalStoreService{Path: "store", Type: "LOCAL", StorePersist: storePersist}
 	userInfo := &service.UserInfo{UserPersist: userPersist, StoreService: storeService}
 	videoService := &service.SimpleVideoService{StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
 	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist, StoreService: storeService}
 	userPostService := &service.SimpleUserPostService{PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
 	postAttachService := &service.SimplePostAttachService{PostAttachPersist: postAttachPersist, StoreService: storeService}
-	postService := &service.SimplePostService{PostsPersist: postsPersist, PostAttachPersist: postAttachPersist}
+	postService := &service.SimplePostService{PostsPersist: postsPersist, PostAttachPersist: postAttachPersist,ElasticSearchService:elasticSearchService}
 	userFollowService := &service.SimpleUserFollowService{UserPersist: userPersist, UserFollowInfoPersist: userFollowInfoPersist}
 	collectorService := &service.SimpleCollectorService{UserCollectionInfoPersist: userCollectionInfoPersist, UserPersist: userPersist}
 	//SmsController
@@ -117,10 +121,11 @@ func main() {
 }
 
 func loadConfig() *cfg.Config {
-	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{}}
+	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{},ElasticConfig:&cfg.ElasticConfig{}}
 	cfg.LoadYaml("conf/redis.yml", c.RedisConfig)
 	cfg.LoadYaml("conf/aliyun.yml", c.AliYunConfig)
 	cfg.LoadYaml("conf/database.yml", c.DatabaseConfig)
+	cfg.LoadYaml("conf/elastic.yml", c.ElasticConfig)
 	return c
 }
 
