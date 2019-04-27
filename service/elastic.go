@@ -31,7 +31,7 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	s := elasticSearchService.client.Search()
 	bq := elastic.NewBoolQuery()
 	for k, v := range keyword {
-		bq.Must(elastic.NewMatchQuery(k,v))
+		bq.Must(elastic.NewMatchQuery(k,v).Analyzer("ik_max_word"))
 	}
 	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewScoreSort())
 	r, err := s.Do(context.Background())
