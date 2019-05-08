@@ -57,3 +57,5 @@ var SignedUser = &Info{Code: "000122", Message: "用户已注册"}
 var TargetUserNotFound = &Info{Code: "000123", Message: "接收用户不存在"}
 var MessageAttachNotFound = &Info{Code: "000124", Message: "消息附件不存在"}
 var CommentNotFound = &Info{Code: "000125", Message: "评论不存在"}
+var CantFollowYourSelf = &Info{Code: "000126", Message: "不需要关注自己"}
+var NoFollowUserFound = &Info{Code: "000127", Message: "关注的用户不存在"}

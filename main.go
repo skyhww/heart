@@ -60,7 +60,7 @@ func main() {
 	}
 	storeService := &service.LocalStoreService{Path: "store", Type: "LOCAL", StorePersist: storePersist}
 	userInfo := &service.UserInfo{UserPersist: userPersist, StoreService: storeService}
-	videoService := &service.SimpleVideoService{StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
+	videoService := &service.SimpleVideoService{ElasticSearchService:elasticSearchService,StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
 	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist, StoreService: storeService}
 	userPostService := &service.SimpleUserPostService{PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
 	postAttachService := &service.SimplePostAttachService{PostAttachPersist: postAttachPersist, StoreService: storeService}
@@ -97,8 +97,10 @@ func main() {
 	ns.Router("/user/info/signature", signature)
 	ns.Router("/message", iMessage)
 	ns.Router("/message/:id/attach", iMessageAttachController)
+
 	ns.Router("/user/posts", userPostsController)
 
+	ns.Router("/user/posts/:id", userPostsController,"delete:Delete")
 	ns.Router("/user/:id/icon", icon)
 
 
@@ -113,7 +115,7 @@ func main() {
 	ns.Router("/posts/:post_id/comment", commentController)
 	ns.Router("/comment/:id", commentController,"delete:Delete")
 	ns.Router("/relation/:user_id", relationController)
-	ns.Router("/post_collector/:posts_id", userCollectorController)
+	ns.Router("/posts_collector/:posts_id", userCollectorController)
 
 
 	beego.AddNamespace(ns)

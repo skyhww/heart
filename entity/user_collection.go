@@ -45,7 +45,7 @@ func (userCollectionInfoDao *UserCollectionInfoDao) Save(userCollectionInfo *Use
 	if c > 1 {
 		return tx.Commit()
 	}
-	_, err = tx.NamedExec("insert into user_collection_info(post_id,user_id,create_time,enable) values(:post_id,:user_id,:create_time,1)", userCollectionInfoDao)
+	_, err = tx.NamedExec("insert into user_collection_info(post_id,user_id,create_time,enable) values(:post_id,:user_id,:create_time,1)", userCollectionInfo)
 	if err != nil {
 		tx.Rollback()
 		return err

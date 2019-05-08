@@ -31,10 +31,11 @@ type PostComment struct {
 	Id         int64      `db:"id" json:"id"`
 	UserId     int64      `db:"user_id" json:"user_id"`
 	CreateTime *time.Time `db:"create_time" json:"create_time"`
-	Enable     int        `db:"enable"`
+	Enable     int        `db:"enable" json:"-"`
 	Content    string     `db:"content" json:"content"`
 	PostId     int64      `db:"post_id" json:"post_id"`
 	ReplyId    int64      `db:"reply_id" json:"reply_id"`
+	Attach     *string    `db:"attach" json:"-"`
 }
 
 type PostCommentPersist interface {
@@ -98,16 +99,19 @@ func NewPostCommentPersist(db *sqlx.DB) PostCommentPersist {
 }
 func (postCommentDao *PostCommentDao) Get(id int64) (*PostComment, error) {
 	p := &PostComment{}
-	err := postCommentDao.DB.Get(p, "select * from user_post where id=? ", id)
+	err := postCommentDao.DB.Get(p, "select id,user_id,create_time,content,post_id,reply_id from post_comment where id=? ", id)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
+	}
+	if p.Id==0{
+		return nil,nil
 	}
 	return p, nil
 }
 
 func (postCommentDao *PostCommentDao) Save(postComment *PostComment) error {
 	tx := postCommentDao.DB.MustBegin()
-	r, err := tx.Exec("insert into post_comment(user_id,create_time,enable,content,post_id,reply_id) values(:user_id,:create_time,1,:content,:post_id,:reply_id)", postComment)
+	r, err := tx.NamedExec("insert into post_comment(user_id,create_time,enable,content,post_id,reply_id) values(:user_id,:create_time,1,:content,:post_id,:reply_id)", postComment)
 	if err != nil {
 		tx.Rollback()
 		return err

@@ -179,7 +179,7 @@ func (commentController *CommentController) Replay() {
 	if !info.IsSuccess() {
 		return
 	}
-	id, err := commentController.GetInt64("id", -1)
+	id, err := commentController.GetInt64(":id", -1)
 	if err != nil || id == -1 {
 		info = common.IllegalRequest
 		return
@@ -239,8 +239,12 @@ type PostAttachController struct {
 func (postAttachController *PostAttachController) Get() {
 	info := base.Success
 	defer func() {
-		postAttachController.Data["json"] = info
-		postAttachController.ServeJSON()
+		if !info.IsSuccess() {
+			postAttachController.Data["json"] = info
+			postAttachController.ServeJSON()
+		} else {
+			postAttachController.Ctx.ResponseWriter.Flush()
+		}
 	}()
 	id, err := postAttachController.GetInt64("id", -1)
 	if err != nil || id == -1 {
@@ -270,8 +274,12 @@ func (postAttachController *PostAttachController) Get() {
 func (postAttachController *PostAttachController) GetPage() {
 	info := base.Success
 	defer func() {
-		postAttachController.Data["json"] = info
-		postAttachController.ServeJSON()
+		if !info.IsSuccess() {
+			postAttachController.Data["json"] = info
+			postAttachController.ServeJSON()
+		} else {
+			postAttachController.Ctx.ResponseWriter.Flush()
+		}
 	}()
 	id, err := postAttachController.GetInt64("posts_id", -1)
 	if err != nil || id == -1 {
@@ -310,10 +318,10 @@ func (postsController *PostsController) Get() {
 		postsController.Data["json"] = info
 		postsController.ServeJSON()
 	}()
-	t, info := postsController.TokenHolder.GetToken(&postsController.Controller)
+	/*t, info := postsController.TokenHolder.GetToken(&postsController.Controller)
 	if !info.IsSuccess() {
 		return
-	}
+	}*/
 	pageSize, err := postsController.GetInt("page_size", 5)
 	if err != nil {
 		info = common.RequestDataRequired
@@ -326,5 +334,5 @@ func (postsController *PostsController) Get() {
 	}
 	keyword := postsController.GetString("keyword", "")
 	page := &base.Page{PageSize: pageSize, PageNo: pageNo}
-	info = postsController.PostService.GetPosts(keyword, t, page)
+	info = postsController.PostService.GetPosts(keyword, nil, page)
 }

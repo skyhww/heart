@@ -16,12 +16,10 @@ type RelationController struct {
 func (relationController *RelationController) Put() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			relationController.Data["json"] = info
-			relationController.ServeJSON()
-		}
+		relationController.Data["json"] = info
+		relationController.ServeJSON()
 	}()
-	userId, err := relationController.GetInt64("user_id", -1)
+	userId, err := relationController.GetInt64(":user_id", -1)
 	if err != nil || userId == -1 {
 		info = common.IllegalRequestDataFormat
 		return
@@ -36,12 +34,10 @@ func (relationController *RelationController) Put() {
 func (relationController *RelationController) Delete() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			relationController.Data["json"] = info
-			relationController.ServeJSON()
-		}
+		relationController.Data["json"] = info
+		relationController.ServeJSON()
 	}()
-	userId, err := relationController.GetInt64("user_id", -1)
+	userId, err := relationController.GetInt64(":user_id", -1)
 	if err != nil || userId == -1 {
 		info = common.IllegalRequestDataFormat
 		return
@@ -55,10 +51,8 @@ func (relationController *RelationController) Delete() {
 func (relationController *RelationController) Get() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			relationController.Data["json"] = info
-			relationController.ServeJSON()
-		}
+		relationController.Data["json"] = info
+		relationController.ServeJSON()
 	}()
 	t, info := relationController.TokenHolder.GetToken(&relationController.Controller)
 	if !info.IsSuccess() {

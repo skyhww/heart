@@ -22,6 +22,7 @@ type SimpleCollectorService struct {
 func (collectorService *SimpleCollectorService) Add(token *Token, postId int64) *base.Info {
 	u, err := collectorService.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -39,6 +40,7 @@ func (collectorService *SimpleCollectorService) Add(token *Token, postId int64) 
 func (collectorService *SimpleCollectorService) Remove(token *Token, postId int64) *base.Info {
 	u, err := collectorService.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -54,6 +56,7 @@ func (collectorService *SimpleCollectorService) Remove(token *Token, postId int6
 func (collectorService *SimpleCollectorService) Get(token *Token, page *base.Page) *base.Info {
 	u, err := collectorService.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {
@@ -69,6 +72,7 @@ func (collectorService *SimpleCollectorService) Get(token *Token, page *base.Pag
 func (collectorService *SimpleCollectorService) GetCount(token *Token) *base.Info {
 	u, err := collectorService.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {

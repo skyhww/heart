@@ -113,12 +113,8 @@ func (videoController *VideoController) Get() {
 func (videoController *VideoController) Search() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			videoController.Data["json"] = info
-			videoController.ServeJSON()
-		} else {
-			videoController.Ctx.ResponseWriter.Flush()
-		}
+		videoController.Data["json"] = info
+		videoController.ServeJSON()
 	}()
 	t, info := videoController.TokenHolder.GetToken(&videoController.Controller)
 	if !info.IsSuccess() {

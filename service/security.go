@@ -133,6 +133,7 @@ func (security *SimpleSecurity) SendRegistCode(mobile string) *base.Info {
 	code := helper.CreateCaptcha()
 	_, err := security.Pool.Get().Do("set", "regist_"+mobile, code, "EX", 60000, "NX")
 	if err != nil {
+		logs.Error(err)
 		return base.SmsSendFailure
 	}
 	b := security.SmsClient.SendRegistCode(mobile, code)
@@ -188,6 +189,7 @@ func (security *SimpleSecurity) Regist(mobile, password, smsCode string) *base.I
 func (security *SimpleSecurity) LogOut(token *Token) *base.Info {
 	_, err := security.Pool.Get().Do("del", token.Token)
 	if err != nil {
+		logs.Error(err)
 		return base.SmsSendFailure
 	}
 	return base.Success

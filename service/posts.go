@@ -49,7 +49,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 		data, _ := page.Data.(*[]entity.UserPost)
 		attachPage := &base.Page{PageNo: 1, PageSize: 5}
 		for index := range *data {
-			err = simplePostService.PostAttachPersist.Get(token.UserId, (*data)[index].Id, attachPage)
+			err = simplePostService.PostAttachPersist.Get((*data)[index].UserId, (*data)[index].Id, attachPage)
 			if err != nil {
 				logs.Error(err)
 				return base.ServerError
@@ -121,6 +121,7 @@ func (simplePostService *SimpleUserPostService) GetPosts(token *Token, page *bas
 func (simplePostService *SimpleUserPostService) GetComments(postId int64) *base.Info {
 	c, err := simplePostService.PostCommentPersist.GetComments(&entity.UserPost{Id: postId})
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	return base.NewSuccess(c)
@@ -146,6 +147,7 @@ func (simplePostService *SimpleUserPostService) DeleteComment(token *Token, id i
 func (simplePostService *SimpleUserPostService) AddComment(token *Token, comment *Comment) *base.Info {
 	u, err := simplePostService.UserPersist.GetById(token.UserId)
 	if err != nil {
+		logs.Error(err)
 		return base.ServerError
 	}
 	if u == nil {

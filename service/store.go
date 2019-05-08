@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"heart/entity"
 	"time"
+	"github.com/astaxie/beego/logs"
 )
 
 type StoreService interface {
@@ -28,6 +29,7 @@ type LocalStoreService struct {
 func (localStoreService *LocalStoreService) createDirIfNotExist(dir string) error {
 	_, err := os.Stat(dir)
 	if err == nil {
+		logs.Error(err)
 		return nil
 	}
 	if os.IsNotExist(err) {
@@ -39,21 +41,25 @@ func (localStoreService *LocalStoreService) createDirIfNotExist(dir string) erro
 func (localStoreService *LocalStoreService) Save(nameSpace string, content *[]byte, suffix string) (string, error) {
 	uid, err := uuid.NewV4()
 	if err != nil {
+		logs.Error(err)
 		return "", err
 	}
 	url := uid.String()
 	err = localStoreService.createDirIfNotExist(localStoreService.Path + "/" + nameSpace)
 	if err != nil {
+		logs.Error(err)
 		return "", err
 	}
 	f, err := os.Create(localStoreService.Path + "/" + nameSpace + "/" + url)
 	if f == nil || err != nil {
+		logs.Error(err)
 		return "", err
 	}
 	defer f.Close()
 	_, err = f.Write(*content)
 	now := time.Now()
 	if err == nil {
+		logs.Error(err)
 		return url, localStoreService.StorePersist.Save(&entity.Store{Url: &url, StoreType: &localStoreService.Type, Suffix: suffix, CreateTime: &now})
 	}
 	return url, err
@@ -61,6 +67,7 @@ func (localStoreService *LocalStoreService) Save(nameSpace string, content *[]by
 func (localStoreService *LocalStoreService) Get(nameSpace string, url string) ([]byte, string, error) {
 	s, err := localStoreService.StorePersist.Get(url)
 	if err != nil {
+		logs.Error(err)
 		return nil, "", err
 	}
 	if s == nil {
@@ -69,11 +76,13 @@ func (localStoreService *LocalStoreService) Get(nameSpace string, url string) ([
 
 	f, err := os.Open(localStoreService.Path + "/" + nameSpace + "/" + url)
 	if f == nil || err != nil {
+		logs.Error(err)
 		return nil, "", err
 	}
 	defer f.Close()
 	b, err := ioutil.ReadAll(f)
 	if err != nil {
+		logs.Error(err)
 		return nil, "", err
 	}
 	return b, url + s.Suffix, nil

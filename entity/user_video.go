@@ -11,7 +11,6 @@ type UserVideo struct {
 	Id         int64      `db:"id" json:"id"`
 	UserId     int64      `db:"user_id"`
 	Url        *string    `db:"url" json:"url"`
-	StoreType  *string    `db:"store_type"`
 	CreateTime *time.Time `db:"create_time" json:"create_time"`
 	Enable     int        `db:"enable"`
 	Hash       *string    `db:"hash" json:"hash"`

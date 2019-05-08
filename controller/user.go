@@ -73,6 +73,39 @@ func (user *User) Put() {
 	info = user.Service.Regist(passInput.Mobile, passInput.Password, passInput.SmsCode)
 }
 
+//修改密码
+func (user *User) Post() {
+	info := base.Success
+	defer func() {
+		user.Data["json"] = info
+		user.ServeJSON()
+	}()
+	passInput := &PassInput{}
+	b, err := ioutil.ReadAll(user.Ctx.Request.Body)
+	if err != nil {
+		logs.Error(err)
+		info = common.IllegalRequest
+		return
+	}
+	if err := json.Unmarshal(b, &passInput); err != nil {
+		logs.Error(err)
+		info = common.IllegalRequestDataFormat
+		return
+	}
+	info = passInput.validateMobile()
+	if !info.IsSuccess() {
+		return
+	}
+	info = passInput.validateSmsCode()
+	if !info.IsSuccess() {
+		return
+	}
+	info = passInput.validateRegistPassword()
+	if !info.IsSuccess() {
+		return
+	}
+	//info = user.Service(passInput.Mobile, passInput.Password, passInput.SmsCode)
+}
 //获取用户信息
 func (user *User) Get() {
 	info := base.Success
@@ -101,10 +134,12 @@ func (user *Icon) Get() {
 		if !info.IsSuccess() {
 			user.Data["json"] = info
 			user.ServeJSON()
+		}else{
+			user.Ctx.ResponseWriter.Flush()
 		}
 	}()
 
-	id, err := user.GetInt64("id", -1)
+	id, err := user.GetInt64(":id", -1)
 	if err != nil {
 		info = common.IllegalRequest
 		return

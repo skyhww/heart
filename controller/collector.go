@@ -16,12 +16,10 @@ type UserCollectorController struct {
 func (userCollectorController *UserCollectorController) Put() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			userCollectorController.Data["json"] = info
-			userCollectorController.ServeJSON()
-		}
+		userCollectorController.Data["json"] = info
+		userCollectorController.ServeJSON()
 	}()
-	postsId, err := userCollectorController.GetInt64("posts_id", -1)
+	postsId, err := userCollectorController.GetInt64(":posts_id", -1)
 	if err != nil || postsId == -1 {
 		info = common.IllegalRequestDataFormat
 		return
@@ -35,10 +33,8 @@ func (userCollectorController *UserCollectorController) Put() {
 func (userCollectorController *UserCollectorController) Delete() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			userCollectorController.Data["json"] = info
-			userCollectorController.ServeJSON()
-		}
+		userCollectorController.Data["json"] = info
+		userCollectorController.ServeJSON()
 	}()
 	postsId, err := userCollectorController.GetInt64("posts_id", -1)
 	if err != nil || postsId == -1 {
@@ -54,10 +50,8 @@ func (userCollectorController *UserCollectorController) Delete() {
 func (userCollectorController *UserCollectorController) Get() {
 	info := base.Success
 	defer func() {
-		if !info.IsSuccess() {
-			userCollectorController.Data["json"] = info
-			userCollectorController.ServeJSON()
-		}
+		userCollectorController.Data["json"] = info
+		userCollectorController.ServeJSON()
 	}()
 	t, info := userCollectorController.TokenHolder.GetToken(&userCollectorController.Controller)
 	if !info.IsSuccess() {
