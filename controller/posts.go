@@ -89,7 +89,7 @@ func (postsController *UserPostsController) Delete() {
 		postsController.Data["json"] = info
 		postsController.ServeJSON()
 	}()
-	id, err := postsController.GetInt64("id", -1)
+	id, err := postsController.GetInt64(":id", -1)
 	if err != nil || id == -1 {
 		info = common.RequestDataRequired
 		return

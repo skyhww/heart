@@ -228,7 +228,20 @@ func (simplePostService *SimpleUserPostService) PutPosts(token *Token, post *Pos
 	return base.NewSuccess(post)
 }
 func (simplePostService *SimpleUserPostService) DeletePosts(token *Token, id int64) *base.Info {
-	return nil
+	u, err := simplePostService.UserPersist.GetById(token.UserId)
+	if err != nil {
+		logs.Error(err)
+		return base.ServerError
+	}
+	if u == nil {
+		return base.NoUserFound
+	}
+	err=simplePostService.UserPostPersist.Delete(token.UserId,id)
+	if err!=nil{
+		logs.Error(err)
+		return base.ServerError
+	}
+	return base.Success
 }
 
 type CommentService interface {

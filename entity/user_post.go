@@ -53,7 +53,7 @@ type PostCommentPersist interface {
 type UserPostPersist interface {
 	Save(post *UserPost) error
 	Get(userId int64, page *base.Page) error
-	Delete(id int64) error
+	Delete(userId, id int64) error
 }
 
 type PostAttachPersist interface {
@@ -103,8 +103,8 @@ func (postCommentDao *PostCommentDao) Get(id int64) (*PostComment, error) {
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
-	if p.Id==0{
-		return nil,nil
+	if p.Id == 0 {
+		return nil, nil
 	}
 	return p, nil
 }
@@ -226,9 +226,9 @@ func (userPostDao *UserPostDao) Get(userId int64, page *base.Page) error {
 	}
 	return nil
 }
-func (userPostDao *UserPostDao) Delete(id int64) error {
+func (userPostDao *UserPostDao) Delete(userId, id int64) error {
 	tx := userPostDao.DB.MustBegin()
-	_, err := tx.Exec("update user_post set enable=0 where id=?", id)
+	_, err := tx.Exec("update user_post set enable=0 where id=? and user_id=?", id, userId)
 	if err != nil {
 		tx.Rollback()
 		return err
