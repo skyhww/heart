@@ -18,6 +18,7 @@ import (
 	"heart/controller"
 	"heart/controller/common"
 	"github.com/astaxie/beego/plugins/cors"
+	"heart/extend"
 )
 
 func init() {
@@ -36,7 +37,7 @@ func main() {
 	aliYun := loadAliyun(cfg.AliYunConfig)
 	redisPool := loadRedis(cfg.RedisConfig)
 	db := loadDatabase(cfg.DatabaseConfig)
-
+	s := extend.NewSegmentsFilter()
 	//helper
 	tokenHelper := &service.TokenHelper{Rds: redisPool}
 	simpleTokenService := &service.SimpleTokenService{Pool: redisPool, Ex: time.Second * 60 * 60 * 24}
@@ -54,17 +55,17 @@ func main() {
 	//security
 	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
 	//service
-	elasticSearchService,err:=service.NewElasticSearchService(cfg.ElasticConfig.Host)
-	if err!=nil{
+	elasticSearchService, err := service.NewElasticSearchService(cfg.ElasticConfig.Host)
+	if err != nil {
 		panic(err)
 	}
 	storeService := &service.LocalStoreService{Path: "store", Type: "LOCAL", StorePersist: storePersist}
 	userInfo := &service.UserInfo{UserPersist: userPersist, StoreService: storeService}
-	videoService := &service.SimpleVideoService{ElasticSearchService:elasticSearchService,StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
+	videoService := &service.SimpleVideoService{ElasticSearchService: elasticSearchService, StoreService: storeService, UserPersist: userPersist, UserVideoPersist: userVideoPersist}
 	messageService := &service.SimpleMessageService{MessagePersist: messagePersist, UserPersist: userPersist, StoreService: storeService}
-	userPostService := &service.SimpleUserPostService{PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
+	userPostService := &service.SimpleUserPostService{SegmentsFilter: s, PostCommentPersist: postCommentPersist, PostAttachPersist: postAttachPersist, UserPersist: userPersist, UserPostPersist: userPostPersist}
 	postAttachService := &service.SimplePostAttachService{PostAttachPersist: postAttachPersist, StoreService: storeService}
-	postService := &service.SimplePostService{PostsPersist: postsPersist, PostAttachPersist: postAttachPersist,ElasticSearchService:elasticSearchService}
+	postService := &service.SimplePostService{PostsPersist: postsPersist, PostAttachPersist: postAttachPersist, ElasticSearchService: elasticSearchService}
 	userFollowService := &service.SimpleUserFollowService{UserPersist: userPersist, UserFollowInfoPersist: userFollowInfoPersist}
 	collectorService := &service.SimpleCollectorService{UserCollectionInfoPersist: userCollectionInfoPersist, UserPersist: userPersist}
 	//SmsController
@@ -84,7 +85,7 @@ func main() {
 	postsController := &controller.PostsController{PostService: postService, TokenHolder: tokenHolder}
 	relationController := &controller.RelationController{TokenHolder: tokenHolder, UserFollowService: userFollowService}
 	userCollectorController := &controller.UserCollectorController{TokenHolder: tokenHolder, CollectorService: collectorService}
-	commentController:=&controller.CommentController{PostService:userPostService,TokenHolder:tokenHolder}
+	commentController := &controller.CommentController{PostService: userPostService, TokenHolder: tokenHolder}
 	//iMessage
 	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder, Limit: 10}
 	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 5}
@@ -100,30 +101,28 @@ func main() {
 
 	ns.Router("/user/posts", userPostsController)
 
-	ns.Router("/user/posts/:id", userPostsController,"delete:Delete")
+	ns.Router("/user/posts/:id", userPostsController, "delete:Delete")
 	ns.Router("/user/:id/icon", icon)
 
-
-	ns.Router("/video", videoController,"get:Search")
+	ns.Router("/video", videoController, "get:Search")
 	ns.Router("/video/:id", videoController)
 
 	ns.Router("/posts", postsController)
-	ns.Router("/posts/attach/:id", postAttachController,"get:Get")
-	ns.Router("/posts/:posts_id/attach", postAttachController,"get:GetPage")
+	ns.Router("/posts/attach/:id", postAttachController, "get:Get")
+	ns.Router("/posts/:posts_id/attach", postAttachController, "get:GetPage")
 
-	ns.Router("/comment/:id/comment", commentController,"put:Replay")
+	ns.Router("/comment/:id/comment", commentController, "put:Replay")
 	ns.Router("/posts/:post_id/comment", commentController)
-	ns.Router("/comment/:id", commentController,"delete:Delete")
+	ns.Router("/comment/:id", commentController, "delete:Delete")
 	ns.Router("/relation/:user_id", relationController)
 	ns.Router("/posts_collector/:posts_id", userCollectorController)
-
 
 	beego.AddNamespace(ns)
 	beego.Run()
 }
 
 func loadConfig() *cfg.Config {
-	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{},ElasticConfig:&cfg.ElasticConfig{}}
+	c := &cfg.Config{RedisConfig: &cfg.RedisConfig{}, AliYunConfig: &cfg.AliYunConfig{}, DatabaseConfig: &cfg.DatabaseConfig{}, ElasticConfig: &cfg.ElasticConfig{}}
 	cfg.LoadYaml("conf/redis.yml", c.RedisConfig)
 	cfg.LoadYaml("conf/aliyun.yml", c.AliYunConfig)
 	cfg.LoadYaml("conf/database.yml", c.DatabaseConfig)

@@ -6,6 +6,7 @@ import (
 	"time"
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
+	"heart/extend"
 )
 
 type Post struct {
@@ -33,7 +34,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 	if len(bs) == 0 {
 		return base.NewSuccess(page)
 	}
-	data := make([]entity.UserPost,0)
+	data := make([]entity.UserPost, 0)
 	for _, b := range bs {
 		tmp := &entity.UserPost{}
 		err = json.Unmarshal(b, tmp)
@@ -41,7 +42,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 			logs.Error(err)
 			return base.ServerError
 		}
-		data=append(data, *tmp)
+		data = append(data, *tmp)
 	}
 	page.Data = &data
 
@@ -87,6 +88,7 @@ type SimpleUserPostService struct {
 	PostAttachPersist  entity.PostAttachPersist
 	UserPersist        entity.UserPersist
 	UserPostPersist    entity.UserPostPersist
+	SegmentsFilter     *extend.SegmentsFilter
 }
 
 func (simplePostService *SimpleUserPostService) GetPosts(token *Token, page *base.Page) *base.Info {
@@ -153,6 +155,11 @@ func (simplePostService *SimpleUserPostService) AddComment(token *Token, comment
 	if u == nil {
 		return base.NoUserFound
 	}
+	b, word := simplePostService.SegmentsFilter.Match(comment.Content)
+	if b {
+		logs.Info("敏感词" + word)
+		return base.IllegalWord
+	}
 	comment.PostComment.UserId = u.Id
 	now := time.Now()
 	comment.PostComment.CreateTime = &now
@@ -212,6 +219,13 @@ func (simplePostService *SimpleUserPostService) PutPosts(token *Token, post *Pos
 	if u == nil {
 		return base.NoUserFound
 	}
+	if post.Content != nil {
+		b, word := simplePostService.SegmentsFilter.Match(*post.Content)
+		if b {
+			logs.Info("敏感词" + word)
+			return base.IllegalWord
+		}
+	}
 	now := time.Now()
 	post.UserId = token.UserId
 	post.CreateTime = &now
@@ -236,8 +250,8 @@ func (simplePostService *SimpleUserPostService) DeletePosts(token *Token, id int
 	if u == nil {
 		return base.NoUserFound
 	}
-	err=simplePostService.UserPostPersist.Delete(token.UserId,id)
-	if err!=nil{
+	err = simplePostService.UserPostPersist.Delete(token.UserId, id)
+	if err != nil {
 		logs.Error(err)
 		return base.ServerError
 	}
