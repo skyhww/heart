@@ -29,7 +29,7 @@ func (videoController *VideoController) Put() {
 		return
 	}
 	content := videoController.GetString("content")
-	f, h, err := videoController.GetFile("video")
+	f, h, err := videoController.GetFile("attach")
 	if err != nil {
 		logs.Error(err)
 		info = common.FileUploadFailed

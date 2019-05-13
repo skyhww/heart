@@ -3,7 +3,6 @@ package service
 import (
 	"heart/entity"
 	"heart/service/common"
-	"hash/crc32"
 	"time"
 	"github.com/astaxie/beego/logs"
 	"encoding/json"
@@ -42,9 +41,9 @@ func (video *SimpleVideoService) PushVideo(token *Token, content *[]byte, suffix
 	}
 	//优先保存文件
 	now := time.Now()
-	c := crc32.NewIEEE()
-	hash := string(c.Sum(*content))
-	userVideo := &entity.UserVideo{UserId: u.Id, CreateTime: &now, Url: &id, Hash: &hash, Content: &title}
+	//c := crc32.NewIEEE()
+	//hash := (&base64.Encoding{}).EncodeToString(c.Sum(*content))
+	userVideo := &entity.UserVideo{UserId: u.Id, CreateTime: &now, Url: &id, Content: &title}
 	err = video.UserVideoPersist.Save(userVideo)
 	if err != nil {
 		logs.Error(err)

@@ -106,6 +106,7 @@ func main() {
 
 	ns.Router("/video", videoController, "get:Search")
 	ns.Router("/video/:id", videoController)
+	ns.Router("/video", videoController,"put:Put")
 
 	ns.Router("/posts", postsController)
 	ns.Router("/posts/attach/:id", postAttachController, "get:Get")
