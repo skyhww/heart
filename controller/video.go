@@ -38,6 +38,7 @@ func (videoController *VideoController) Put() {
 	defer f.Close()
 	//字节
 	if h.Size > (videoController.Limit << 20) {
+		logs.Warn("size %d",h.Size)
 		info = common.FileSizeUnbound
 		return
 	}
