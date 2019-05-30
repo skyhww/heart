@@ -19,6 +19,7 @@ import (
 	"heart/controller/common"
 	"github.com/astaxie/beego/plugins/cors"
 	"heart/extend"
+	"runtime"
 )
 
 func init() {
@@ -31,6 +32,7 @@ func init() {
 	}))
 }
 func main() {
+	runtime.GOMAXPROCS(1)
 	//读取配置文件
 	cfg := loadConfig()
 	//加载配置  阿里云、redis、数据库
