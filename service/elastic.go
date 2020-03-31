@@ -1,13 +1,13 @@
 package service
 
 import (
-	"heart/service/common"
 	"context"
+	"fmt"
 	"gopkg.in/olivere/elastic.v7"
-	"strconv"
+	"heart/service/common"
 	"log"
 	"os"
-	"fmt"
+	"strconv"
 )
 
 type ElasticSearchService interface {
@@ -15,7 +15,7 @@ type ElasticSearchService interface {
 }
 
 func NewElasticSearchService(host string) (ElasticSearchService, error) {
-	c, err := elastic.NewClient(elastic.SetURL(host),elastic.SetSniff(false), elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
+	c, err := elastic.NewClient(elastic.SetURL(host), elastic.SetSniff(false), elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)))
 	if err != nil {
 		return nil, err
@@ -31,7 +31,14 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	s := elasticSearchService.client.Search()
 	bq := elastic.NewBoolQuery()
 	for k, v := range keyword {
-		bq.Must(elastic.NewMatchQuery(k,v).Analyzer("ik_max_word"))
+		switch v.(type) {
+		case string:
+			if v.(string) != "" {
+				bq.Must(elastic.NewMatchQuery(k, v))
+			}
+		default:
+			bq.Must(elastic.NewTermQuery(k, v))
+		}
 	}
 	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewScoreSort())
 	r, err := s.Do(context.Background())
