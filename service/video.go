@@ -1,11 +1,12 @@
 package service
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/astaxie/beego/logs"
 	"heart/entity"
 	"heart/service/common"
 	"time"
-	"github.com/astaxie/beego/logs"
-	"encoding/json"
 )
 
 type Video struct {
@@ -18,9 +19,9 @@ type VideoService interface {
 	SearchVideo(token *Token, content string, page *base.Page) *base.Info
 }
 type SimpleVideoService struct {
-	StoreService     StoreService
-	UserVideoPersist entity.UserVideoPersist
-	UserPersist      entity.UserPersist
+	StoreService         StoreService
+	UserVideoPersist     entity.UserVideoPersist
+	UserPersist          entity.UserPersist
 	ElasticSearchService ElasticSearchService
 }
 
@@ -82,8 +83,8 @@ func (video *SimpleVideoService) SearchVideo(token *Token, content string, page 
 	key := make(map[string]interface{})
 	key["content"] = content
 	key["enable"] = true
-	key["user_id"]=u.Id
-	bs, err := video.ElasticSearchService.Query(key, "3dheart", "video", page)
+	key["user_id"] = u.Id
+	bs, err := video.ElasticSearchService.Query(key, "3dheart_vedios", "video", page)
 	if err != nil {
 		logs.Error(err)
 		return base.ServerError
@@ -91,7 +92,7 @@ func (video *SimpleVideoService) SearchVideo(token *Token, content string, page 
 	if len(bs) == 0 {
 		return base.NewSuccess(page)
 	}
-	data := make([]entity.UserVideo,0)
+	data := make([]entity.UserVideo, 0)
 	for _, b := range bs {
 		tmp := &entity.UserVideo{}
 		err = json.Unmarshal(b, tmp)
@@ -99,9 +100,9 @@ func (video *SimpleVideoService) SearchVideo(token *Token, content string, page 
 			logs.Error(err)
 			return base.ServerError
 		}
-		data=append(data, *tmp)
+		data = append(data, *tmp)
 	}
-	page.Data=data
+	page.Data = data
 	return base.NewSuccess(page)
 }
 
@@ -121,6 +122,7 @@ func (video *SimpleVideoService) GetVideo(token *Token, id int64) (*base.Info, *
 		logs.Error(err)
 		return base.ServerError, nil, ""
 	}
+	fmt.Println(id, u.Id)
 	b, n, err := video.StoreService.Get("video", *v.Url)
 	if err != nil {
 		logs.Error(err)

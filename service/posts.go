@@ -1,12 +1,12 @@
 package service
 
 import (
+	"encoding/json"
+	"github.com/astaxie/beego/logs"
 	"heart/entity"
+	"heart/extend"
 	"heart/service/common"
 	"time"
-	"github.com/astaxie/beego/logs"
-	"encoding/json"
-	"heart/extend"
 )
 
 type Post struct {
@@ -26,7 +26,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 	key := make(map[string]interface{})
 	key["content"] = keyword
 	key["enable"] = true
-	bs, err := simplePostService.ElasticSearchService.Query(key, "3dheart", "posts", page)
+	bs, err := simplePostService.ElasticSearchService.Query(key, "3dheart_posts", "posts", page)
 	if err != nil {
 		logs.Error(err)
 		return base.ServerError

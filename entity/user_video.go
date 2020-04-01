@@ -1,10 +1,10 @@
 package entity
 
 import (
-	"time"
+	"database/sql"
 	"github.com/jmoiron/sqlx"
 	"heart/service/common"
-	"database/sql"
+	"time"
 )
 
 type UserVideo struct {
@@ -21,7 +21,7 @@ type UserVideoPersist interface {
 	Save(video *UserVideo) error
 	Delete(video *UserVideo) error
 	Get(video *UserVideo) error
-	SelectByContent(userId int64,content string, page *base.Page) error
+	SelectByContent(userId int64, content string, page *base.Page) error
 }
 
 func NewUserVideoPersist(db *sqlx.DB) UserVideoPersist {
@@ -32,15 +32,15 @@ type UserVideoDao struct {
 	db *sqlx.DB
 }
 
-func (userVideoDao *UserVideoDao) SelectByContent(userId int64,content string, page *base.Page) error {
+func (userVideoDao *UserVideoDao) SelectByContent(userId int64, content string, page *base.Page) error {
 	count := 0
-	err := userVideoDao.db.Get(&count, "select count(1) from user_video where user_id=? and  content like '%"+content+"%' and enable=1 ",userId)
+	err := userVideoDao.db.Get(&count, "select count(1) from user_video where user_id=? and  content like '%"+content+"%' and enable=1 ", userId)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 	u := &[]UserVideo{}
 	page.Count = count
-	err = userVideoDao.db.Select(u, "select * from user_video where user_id=? and  content like '%"+content+"%' and enable=1 order by create_time desc limit ?,?",userId, (page.PageNo-1)*page.PageSize, page.PageSize)
+	err = userVideoDao.db.Select(u, "select * from user_video where user_id=? and  content like '%"+content+"%' and enable=1 order by create_time desc limit ?,?", userId, (page.PageNo-1)*page.PageSize, page.PageSize)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -76,12 +76,7 @@ func (userVideoDao *UserVideoDao) Delete(video *UserVideo) error {
 	return nil
 }
 func (userVideoDao *UserVideoDao) Get(video *UserVideo) error {
-	tx := userVideoDao.db.MustBegin()
-	_, err := tx.NamedExec("select id,url,hash,create_time from user_video where id=:id and user_id=:user_id", video)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
+	err := userVideoDao.db.Get(video, "select id,url,hash,create_time from user_video where id=? and user_id=?", video.Id, video.UserId)
 	if err != nil {
 		return err
 	}

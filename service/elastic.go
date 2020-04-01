@@ -40,6 +40,10 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 			bq.Must(elastic.NewTermQuery(k, v))
 		}
 	}
+	sourceContext := &elastic.FetchSourceContext{}
+	sourceContext.Exclude("enable")
+	sourceContext.SetFetchSource(true)
+	s.FetchSourceContext(sourceContext)
 	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewScoreSort())
 	r, err := s.Do(context.Background())
 	if err != nil {
