@@ -53,9 +53,9 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	strInt64 := strconv.FormatInt(r.Hits.TotalHits.Value, 10)
 	page.Count, _ = strconv.Atoi(strInt64)
 	if r.Hits.TotalHits.Value > 0 {
-		b := make([][]byte, r.Hits.TotalHits.Value)
-		for i, hit := range r.Hits.Hits {
-			b[i] = hit.Source
+		b := make([][]byte, 0)
+		for _, hit := range r.Hits.Hits {
+			b = append(b, hit.Source)
 		}
 		return b, nil
 	}

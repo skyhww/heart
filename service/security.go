@@ -1,16 +1,16 @@
 package service
 
 import (
-	"time"
-	"github.com/garyburd/redigo/redis"
-	"heart/sms"
-	"heart/helper"
-	"heart/entity"
 	"crypto/md5"
-	"heart/service/common"
-	"github.com/satori/go.uuid"
-	"github.com/astaxie/beego/logs"
 	"fmt"
+	"github.com/astaxie/beego/logs"
+	"github.com/garyburd/redigo/redis"
+	"github.com/satori/go.uuid"
+	"heart/entity"
+	"heart/helper"
+	"heart/service/common"
+	"heart/sms"
+	"time"
 )
 
 //全局唯一
@@ -31,7 +31,7 @@ func (h *TokenHelper) GetToken(token string) (*Token, *base.Info) {
 	if userId == nil {
 		return nil, base.TokenExpired
 	}
-	go h.Rds.Get().Do("expire", token,time.Second * 60 * 60 * 24)
+	go h.Rds.Get().Do("expire", token, time.Second*60*60*24)
 	return &Token{Token: token, UserId: helper.Int2int64(userId.([]uint8))}, base.Success
 }
 
@@ -94,10 +94,11 @@ type Security interface {
 }
 
 type SimpleSecurity struct {
-	Pool         *redis.Pool
-	SmsClient    sms.Sms
-	UserPersist  entity.UserPersist
-	TokenService *SimpleTokenService
+	Pool                  *redis.Pool
+	SmsClient             sms.Sms
+	UserPersist           entity.UserPersist
+	TokenService          *SimpleTokenService
+	UserFollowInfoPersist entity.UserFollowInfoPersist
 }
 
 //用户登录时，用户信息验证成功后，失效这个用户对应的token
@@ -121,7 +122,8 @@ func (security *SimpleSecurity) Login(mobile, password string) *base.Info {
 	if !in.IsSuccess() {
 		return in
 	}
-
+	user.FollowCount = security.UserFollowInfoPersist.GetFollowCount(user.Id)
+	user.FollowedCount = security.UserFollowInfoPersist.GetFollowedCount(user.Id)
 	return base.NewSuccess(&User{User: user, Token: t})
 }
 

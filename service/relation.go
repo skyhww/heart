@@ -1,10 +1,10 @@
 package service
 
 import (
-	"heart/service/common"
-	"heart/entity"
-	"time"
 	"github.com/astaxie/beego/logs"
+	"heart/entity"
+	"heart/service/common"
+	"time"
 )
 
 type UserFollowService interface {
@@ -81,7 +81,7 @@ func (simpleUserFollowService *SimpleUserFollowService) GetFollowUser(token *Tok
 		logs.Error(err)
 		return base.ServerError
 	}
-	return base.Success
+	return base.NewSuccess(page)
 }
 func (simpleUserFollowService *SimpleUserFollowService) GetFollowedUser(token *Token, page *base.Page) *base.Info {
 	u, err := simpleUserFollowService.UserPersist.GetById(token.UserId)
@@ -97,5 +97,5 @@ func (simpleUserFollowService *SimpleUserFollowService) GetFollowedUser(token *T
 		logs.Error(err)
 		return base.ServerError
 	}
-	return base.Success
+	return base.NewSuccess(page)
 }

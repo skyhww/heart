@@ -27,6 +27,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 	key["content"] = keyword
 	key["enable"] = true
 	bs, err := simplePostService.ElasticSearchService.Query(key, "3dheart_posts", "posts", page)
+	logs.Info(bs)
 	if err != nil {
 		logs.Error(err)
 		return base.ServerError
@@ -38,6 +39,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 	for _, b := range bs {
 		tmp := &entity.UserPost{}
 		err = json.Unmarshal(b, tmp)
+		logs.Info(tmp)
 		if err != nil {
 			logs.Error(err)
 			return base.ServerError
@@ -51,6 +53,7 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 		attachPage := &base.Page{PageNo: 1, PageSize: 5}
 		for index := range *data {
 			err = simplePostService.PostAttachPersist.Get((*data)[index].UserId, (*data)[index].Id, attachPage)
+			logs.Info(err)
 			if err != nil {
 				logs.Error(err)
 				return base.ServerError

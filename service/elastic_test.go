@@ -17,9 +17,9 @@ func TestSimpleElasticSearchService_Query(t *testing.T) {
 	}
 	s := &SimpleElasticSearchService{c}
 	m := make(map[string]interface{})
-	m["content"] = "测试"
+	m["content"] = ""
 	m["enable"] = true
 	m["user_id"] = 1
 	p := &base.Page{PageNo: 1, PageSize: 10}
-	s.Query(m, "3dheart", "posts", p)
+	s.Query(m, "3dheart_posts", "posts", p)
 }

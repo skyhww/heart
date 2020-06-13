@@ -5,21 +5,21 @@
 package main
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/garyburd/redigo/redis"
-	"time"
-	"heart/cfg"
-	_ "github.com/go-sql-driver/mysql"
-	"heart/sms"
-	"github.com/jmoiron/sqlx"
 	"github.com/aliyun/alibaba-cloud-sdk-go/sdk"
-	"heart/service"
-	"heart/entity"
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/plugins/cors"
+	"github.com/garyburd/redigo/redis"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	"heart/cfg"
 	"heart/controller"
 	"heart/controller/common"
-	"github.com/astaxie/beego/plugins/cors"
+	"heart/entity"
 	"heart/extend"
+	"heart/service"
+	"heart/sms"
 	"runtime"
+	"time"
 )
 
 func init() {
@@ -55,7 +55,7 @@ func main() {
 	userFollowInfoPersist := entity.NewUserFollowInfoPersist(db)
 	userCollectionInfoPersist := entity.NewUserCollectionInfoPersist(db)
 	//security
-	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService}
+	security := &service.SimpleSecurity{Pool: redisPool, SmsClient: aliYun, UserPersist: userPersist, TokenService: simpleTokenService, UserFollowInfoPersist: userFollowInfoPersist}
 	//service
 	elasticSearchService, err := service.NewElasticSearchService(cfg.ElasticConfig.Host)
 	if err != nil {
@@ -80,17 +80,17 @@ func main() {
 	userController := &controller.User{Service: security, TokenHolder: tokenHolder}
 	userName := &controller.Name{TokenHolder: tokenHolder, UserInfo: userInfo}
 	signature := &controller.Signature{TokenHolder: tokenHolder, UserInfo: userInfo}
-	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 3}
-	videoController := &controller.VideoController{VideoService: videoService, TokenHolder: tokenHolder, Limit: 50}
-	userPostsController := &controller.UserPostsController{UserPostService: userPostService, TokenHolder: tokenHolder, StoreService: storeService, Limit: 10, MaxAttach: 10}
+	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 300}
+	videoController := &controller.VideoController{VideoService: videoService, TokenHolder: tokenHolder, Limit: 10000}
+	userPostsController := &controller.UserPostsController{UserPostService: userPostService, TokenHolder: tokenHolder, StoreService: storeService, Limit: 100000, MaxAttach: 10}
 	postAttachController := &controller.PostAttachController{TokenHolder: tokenHolder, PostAttachService: postAttachService}
 	postsController := &controller.PostsController{PostService: postService, TokenHolder: tokenHolder}
 	relationController := &controller.RelationController{TokenHolder: tokenHolder, UserFollowService: userFollowService}
 	userCollectorController := &controller.UserCollectorController{TokenHolder: tokenHolder, CollectorService: collectorService}
 	commentController := &controller.CommentController{PostService: userPostService, TokenHolder: tokenHolder}
 	//iMessage
-	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder, Limit: 10}
-	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 5}
+	iMessage := &controller.IMessageController{MessageService: messageService, TokenHolder: tokenHolder, Limit: 1000}
+	iMessageAttachController := &controller.IMessageAttachController{TokenHolder: tokenHolder, MessageService: messageService, Limit: 500}
 	//beego运行
 	ns := beego.NewNamespace("/heart/v1.0")
 	ns.Router("/token", token)
@@ -108,7 +108,7 @@ func main() {
 
 	ns.Router("/video", videoController, "get:Search")
 	ns.Router("/video/:id", videoController)
-	ns.Router("/video", videoController,"put:Put")
+	ns.Router("/video", videoController, "put:Put")
 
 	ns.Router("/posts", postsController)
 	ns.Router("/posts/attach/:id", postAttachController, "get:Get")
