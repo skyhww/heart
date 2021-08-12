@@ -1,12 +1,12 @@
 package service
 
 import (
+	"encoding/json"
+	"github.com/astaxie/beego/logs"
 	"heart/entity"
+	"heart/extend"
 	"heart/service/common"
 	"time"
-	"github.com/astaxie/beego/logs"
-	"encoding/json"
-	"heart/extend"
 )
 
 type Post struct {
@@ -48,8 +48,8 @@ func (simplePostService *SimplePostService) GetPosts(keyword string, token *Toke
 
 	if page.Data != nil {
 		data, _ := page.Data.(*[]entity.UserPost)
-		attachPage := &base.Page{PageNo: 1, PageSize: 5}
 		for index := range *data {
+			attachPage := &base.Page{PageNo: 1, PageSize: 5}
 			err = simplePostService.PostAttachPersist.Get((*data)[index].UserId, (*data)[index].Id, attachPage)
 			if err != nil {
 				logs.Error(err)
