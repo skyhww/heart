@@ -110,8 +110,8 @@ func (simplePostService *SimpleUserPostService) GetPosts(token *Token, page *bas
 	}
 	if page.Data != nil {
 		data, _ := page.Data.(*[]entity.UserPost)
-		attachPage := &base.Page{PageNo: 1, PageSize: 5}
 		for index := range *data {
+			attachPage := &base.Page{PageNo: 1, PageSize: 100}
 			err = simplePostService.PostAttachPersist.Get(token.UserId, (*data)[index].Id, attachPage)
 			if err != nil {
 				logs.Error(err)
