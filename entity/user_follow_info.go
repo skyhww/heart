@@ -1,10 +1,11 @@
 package entity
 
 import (
-	"time"
-	"heart/service/common"
-	"github.com/jmoiron/sqlx"
 	"database/sql"
+	"github.com/astaxie/beego/logs"
+	"github.com/jmoiron/sqlx"
+	"heart/service/common"
+	"time"
 )
 
 type UserFollowInfo struct {
@@ -26,16 +27,16 @@ type UserFollowInfoPersist interface {
 	//获取粉丝
 	GetFollowed(userId int64, page *base.Page) error
 
-	GetFollowedCount(userId int64) (int, error)
-	GetFollowCount(userId int64) (int, error)
+	GetFollowedCount(userId int64) int
+	GetFollowCount(userId int64) int
 }
 
 type UserFollowInfoDao struct {
 	DB *sqlx.DB
 }
 
-func NewUserFollowInfoPersist(db *sqlx.DB)  UserFollowInfoPersist{
-	return &UserFollowInfoDao{DB:db}
+func NewUserFollowInfoPersist(db *sqlx.DB) UserFollowInfoPersist {
+	return &UserFollowInfoDao{DB: db}
 }
 
 func (userFollowInfoDao *UserFollowInfoDao) Save(userFollowInfo *UserFollowInfo) error {
@@ -71,7 +72,7 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowUsers(userId int64, page *b
 	if count == 0 {
 		return nil
 	}
-	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*page.PageNo, page.PageSize)
+	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*(page.PageNo-1), page.PageSize)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -99,7 +100,7 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowed(userId int64, page *base
 	if count == 0 {
 		return nil
 	}
-	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where follow_user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*page.PageNo, page.PageSize)
+	err = userFollowInfoDao.DB.Select(info, "select user_id,follow_user_id,create_time from user_follow_info where follow_user_id=? and enable=1 order by create_time desc limit ?,?", userId, page.PageSize*(page.PageNo-1), page.PageSize)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -107,21 +108,24 @@ func (userFollowInfoDao *UserFollowInfoDao) GetFollowed(userId int64, page *base
 	page.Data = info
 	return nil
 }
-func (userFollowInfoDao *UserFollowInfoDao) GetFollowedCount(userId int64) (int, error) {
+func (userFollowInfoDao *UserFollowInfoDao) GetFollowedCount(userId int64) int {
 	count := 0
 	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where follow_user_id=? and enable=1 ", userId)
 	if err != nil && err != sql.ErrNoRows {
-		return 0, err
+		logs.Error(err)
+		return 0
 	}
 
-	return count, nil
+	return count
 }
-func (userFollowInfoDao *UserFollowInfoDao) GetFollowCount(userId int64) (int, error) {
+func (userFollowInfoDao *UserFollowInfoDao) GetFollowCount(userId int64) int {
 	count := 0
 	err := userFollowInfoDao.DB.Get(&count, "select count(id) from user_follow_info where user_id=? and enable=1 ", userId)
 	if err != nil && err != sql.ErrNoRows {
-		return 0, err
+		logs.Error(err)
+
+		return 0
 	}
-	return count, nil
+	return count
 
 }

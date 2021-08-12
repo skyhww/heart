@@ -2,12 +2,13 @@ package controller
 
 import (
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"heart/controller/common"
 	"heart/service"
 	"heart/service/common"
-	"heart/controller/common"
 	"io/ioutil"
-	"github.com/astaxie/beego/logs"
 	"path"
+	"strconv"
 )
 
 type VideoController struct {
@@ -38,7 +39,7 @@ func (videoController *VideoController) Put() {
 	defer f.Close()
 	//字节
 	if h.Size > (videoController.Limit << 20) {
-		logs.Warn("size %d",h.Size)
+		logs.Warn("size %d", h.Size)
 		info = common.FileSizeUnbound
 		return
 	}
@@ -86,13 +87,13 @@ func (videoController *VideoController) Get() {
 			videoController.Ctx.ResponseWriter.Flush()
 		}
 	}()
-	id, err := videoController.GetInt64("id")
-	if err != nil || id == 0 {
-		info = common.IllegalRequest
-		return
-	}
+	idString := videoController.Ctx.Input.Param(":id")
 	t, info := videoController.TokenHolder.GetToken(&videoController.Controller)
 	if !info.IsSuccess() {
+		return
+	}
+	id, err := strconv.ParseInt(idString, 10, 64)
+	if err != nil {
 		return
 	}
 	info, b, name := videoController.VideoService.GetVideo(t, id)

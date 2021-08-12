@@ -1,13 +1,13 @@
 package service
 
 import (
-	"heart/service/common"
 	"context"
+	"fmt"
 	"gopkg.in/olivere/elastic.v7"
-	"strconv"
+	"heart/service/common"
 	"log"
 	"os"
-	"fmt"
+	"strconv"
 )
 
 type ElasticSearchService interface {
@@ -15,7 +15,7 @@ type ElasticSearchService interface {
 }
 
 func NewElasticSearchService(host string) (ElasticSearchService, error) {
-	c, err := elastic.NewClient(elastic.SetURL(host),elastic.SetSniff(false), elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
+	c, err := elastic.NewClient(elastic.SetURL(host), elastic.SetSniff(false), elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)),
 		elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)))
 	if err != nil {
 		return nil, err
@@ -31,8 +31,19 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	s := elasticSearchService.client.Search()
 	bq := elastic.NewBoolQuery()
 	for k, v := range keyword {
-		bq.Must(elastic.NewMatchQuery(k,v).Analyzer("ik_max_word"))
+		switch v.(type) {
+		case string:
+			if v.(string) != "" {
+				bq.Must(elastic.NewMatchQuery(k, v))
+			}
+		default:
+			bq.Must(elastic.NewTermQuery(k, v))
+		}
 	}
+	sourceContext := &elastic.FetchSourceContext{}
+	sourceContext.Exclude("enable")
+	sourceContext.SetFetchSource(true)
+	s.FetchSourceContext(sourceContext)
 	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewScoreSort())
 	r, err := s.Do(context.Background())
 	if err != nil {
@@ -42,9 +53,9 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	strInt64 := strconv.FormatInt(r.Hits.TotalHits.Value, 10)
 	page.Count, _ = strconv.Atoi(strInt64)
 	if r.Hits.TotalHits.Value > 0 {
-		b := make([][]byte, r.Hits.TotalHits.Value)
-		for i, hit := range r.Hits.Hits {
-			b[i] = hit.Source
+		b := make([][]byte, 0)
+		for _, hit := range r.Hits.Hits {
+			b = append(b, hit.Source)
 		}
 		return b, nil
 	}

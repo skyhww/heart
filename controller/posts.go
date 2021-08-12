@@ -2,12 +2,15 @@ package controller
 
 import (
 	"github.com/astaxie/beego"
-	"heart/service"
-	"heart/service/common"
+	"github.com/astaxie/beego/logs"
 	"heart/controller/common"
 	"heart/entity"
+	"heart/service"
+	"heart/service/common"
 	"io/ioutil"
+	"mime/multipart"
 	"path"
+	"strconv"
 	"time"
 )
 
@@ -26,19 +29,25 @@ func (postsController *UserPostsController) Put() {
 	defer func() {
 		postsController.Data["json"] = info
 		postsController.ServeJSON()
-		postsController.Ctx.Request.MultipartForm.RemoveAll()
+		if postsController.Ctx.Request.MultipartForm != nil {
+			postsController.Ctx.Request.MultipartForm.RemoveAll()
+		}
 	}()
 	t, info := postsController.TokenHolder.GetToken(&postsController.Controller)
 	if !info.IsSuccess() {
 		return
 	}
-
-	fs, err := postsController.GetFiles("attach")
-	if err != nil {
-		info = common.FileUploadFailed
-		return
+	var fs []*multipart.FileHeader
+	var err error
+	if postsController.Ctx.Request.MultipartForm != nil {
+		fs, err = postsController.GetFiles("attach")
+		if err != nil {
+			info = common.FileUploadFailed
+			return
+		}
 	}
-	content := postsController.GetString("content")
+
+	content := postsController.GetString("content", "")
 	posts := &service.Post{}
 	now := time.Now()
 	posts.Content = &content
@@ -141,16 +150,12 @@ func (commentController *CommentController) Put() {
 	if !info.IsSuccess() {
 		return
 	}
-	id, err := commentController.GetInt64("post_id", -1)
-	if err != nil || id == -1 {
+	id := commentController.Ctx.Input.Param(":post_id")
+	if id == "" {
 		info = common.IllegalRequest
 		return
 	}
-	replayId, err := commentController.GetInt64("id", -1)
-	if err != nil {
-		info = common.IllegalRequest
-		return
-	}
+	replayId := commentController.Ctx.Input.Param("id")
 	msg := common.MessageRequest{}
 	info = commentController.TokenHolder.ReadJsonBody(&commentController.Controller, &msg)
 	if !info.IsSuccess() {
@@ -162,9 +167,15 @@ func (commentController *CommentController) Put() {
 	}
 	c := service.Comment{}
 	c.Content = *msg.Message
-	c.PostId = id
-	if replayId != -1 {
-		c.ReplyId = replayId
+
+	postId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		info = common.IllegalRequestDataFormat
+		return
+	}
+	c.PostId = postId
+	if replayId != "" {
+		c.ReplyId, err = strconv.ParseInt(replayId, 10, 64)
 	}
 	info = commentController.PostService.AddComment(t, &c)
 }
@@ -334,5 +345,7 @@ func (postsController *PostsController) Get() {
 	}
 	keyword := postsController.GetString("keyword", "")
 	page := &base.Page{PageSize: pageSize, PageNo: pageNo}
-	info = postsController.PostService.GetPosts(keyword, nil, page)
+	a := postsController.PostService.GetPosts(keyword, nil, page)
+	logs.Info(a)
+	info = a
 }

@@ -1,21 +1,23 @@
 package entity
 
 import (
-	"time"
-	"github.com/jmoiron/sqlx"
 	"database/sql"
 	"github.com/astaxie/beego/logs"
+	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type User struct {
-	Id         int64      `db:"id" json:"id"`
-	Name       *string    `db:"name" json:"name"`
-	IconUrl    *string    `db:"icon_url" json:"icon_url"`
-	Signature  *string    `db:"signature" json:"signature"`
-	CreateTime *time.Time `db:"create_time" json:"create_time"`
-	Mobile     *string    `db:"mobile" json:"-"`
-	Enable     int        `db:"enable" json:"-"`
-	Password   *string    `db:"password" json:"-"`
+	Id            int64      `db:"id" json:"id"`
+	Name          *string    `db:"name" json:"name"`
+	IconUrl       *string    `db:"icon_url" json:"icon_url"`
+	Signature     *string    `db:"signature" json:"signature"`
+	CreateTime    *time.Time `db:"create_time" json:"create_time"`
+	Mobile        *string    `db:"mobile" json:"-"`
+	Enable        int        `db:"enable" json:"-"`
+	Password      *string    `db:"password" json:"-"`
+	FollowCount   int        `json:"follow_count"`
+	FollowedCount int        `json:"followed_count"`
 }
 
 type UserPersist interface {
@@ -51,7 +53,7 @@ func (userDao *UserDao) Save(user *User) bool {
 }
 func (userDao *UserDao) Get(mobile string) (*User, error) {
 	user := &User{}
-	err := userDao.db.Get(user, "select id,name,icon_url,create_time,password from user where mobile=? ", mobile)
+	err := userDao.db.Get(user, "select id,name,icon_url,create_time,password,signature from user where mobile=? ", mobile)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
