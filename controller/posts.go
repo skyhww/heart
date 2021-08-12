@@ -292,16 +292,13 @@ func (postAttachController *PostAttachController) GetPage() {
 			postAttachController.Ctx.ResponseWriter.Flush()
 		}
 	}()
-	id, err := postAttachController.GetInt64("posts_id", -1)
+	id, err := postAttachController.GetInt64(":posts_id", -1)
 	if err != nil || id == -1 {
 		info = common.RequestDataRequired
 		return
 	}
-	t, info := postAttachController.TokenHolder.GetToken(&postAttachController.Controller)
-	if !info.IsSuccess() {
-		return
-	}
-	info, b, name := postAttachController.PostAttachService.GetAttach(t, id)
+
+	info, b, name := postAttachController.PostAttachService.GetAttach(nil, id)
 	if !info.IsSuccess() {
 		return
 	}
