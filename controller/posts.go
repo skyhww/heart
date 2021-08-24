@@ -233,7 +233,7 @@ func (commentController *CommentController) Get() {
 		commentController.Data["json"] = info
 		commentController.ServeJSON()
 	}()
-	id, err := commentController.GetInt64("post_id", -1)
+	id, err := commentController.GetInt64(":post_id", -1)
 	if err != nil || id == -1 {
 		info = common.IllegalRequest
 		return
@@ -257,7 +257,7 @@ func (postAttachController *PostAttachController) Get() {
 			postAttachController.Ctx.ResponseWriter.Flush()
 		}
 	}()
-	id, err := postAttachController.GetInt64("id", -1)
+	id, err := postAttachController.GetInt64(":id", -1)
 	if err != nil || id == -1 {
 		info = common.RequestDataRequired
 		return

@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"heart/controller/common"
 	"heart/service"
 	"heart/service/common"
-	"encoding/json"
-	"heart/controller/common"
-	"github.com/astaxie/beego/logs"
 	"io/ioutil"
 	"path"
 )
@@ -104,8 +105,10 @@ func (user *User) Post() {
 	if !info.IsSuccess() {
 		return
 	}
+	user.Service.Login()
 	//info = user.Service(passInput.Mobile, passInput.Password, passInput.SmsCode)
 }
+
 //获取用户信息
 func (user *User) Get() {
 	info := base.Success
@@ -118,6 +121,7 @@ func (user *User) Get() {
 		info = common.IllegalRequest
 		return
 	}
+	fmt.Printf("dcdsacda %d \n", id)
 	info = user.UserInfoService.GetUserInfo(id)
 }
 
@@ -134,7 +138,7 @@ func (user *Icon) Get() {
 		if !info.IsSuccess() {
 			user.Data["json"] = info
 			user.ServeJSON()
-		}else{
+		} else {
 			user.Ctx.ResponseWriter.Flush()
 		}
 	}()

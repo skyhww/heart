@@ -44,7 +44,7 @@ func (elasticSearchService *SimpleElasticSearchService) Query(keyword map[string
 	sourceContext.Exclude("enable")
 	sourceContext.SetFetchSource(true)
 	s.FetchSourceContext(sourceContext)
-	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewScoreSort())
+	s.Index(index).Query(bq).From(page.PageSize * (page.PageNo - 1)).Size(page.PageSize).SortBy(elastic.NewFieldSort("create_time").Desc())
 	r, err := s.Do(context.Background())
 	if err != nil {
 		fmt.Sprint(err)

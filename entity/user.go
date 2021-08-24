@@ -26,6 +26,7 @@ type UserPersist interface {
 	GetByUserName(userName string) (*User, error)
 	Update(user *User) (*User, error)
 	GetById(id int64) (*User, error)
+	UpdatePassword(id int64, password string) bool
 }
 
 type UserDao struct {
@@ -34,6 +35,20 @@ type UserDao struct {
 
 func NewUserPersist(db *sqlx.DB) UserPersist {
 	return &UserDao{db: db}
+}
+func (userDao *UserDao) UpdatePassword(id int64, password string) bool {
+	tx := userDao.db.MustBegin()
+	_, err := tx.Exec("update  user set password=? where id=?", password, id)
+	if err != nil {
+		tx.Rollback()
+		return false
+	}
+	err = tx.Commit()
+	if err != nil {
+		logs.Error(err)
+		return false
+	}
+	return true
 }
 func (userDao *UserDao) Save(user *User) bool {
 	tx := userDao.db.MustBegin()

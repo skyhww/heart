@@ -1,10 +1,10 @@
 package entity
 
 import (
-	"github.com/jmoiron/sqlx"
-	"time"
-	"heart/service/common"
 	"database/sql"
+	"github.com/jmoiron/sqlx"
+	"heart/service/common"
+	"time"
 )
 
 type UserPost struct {
@@ -20,7 +20,7 @@ type UserPost struct {
 type PostAttach struct {
 	Id         int64      `db:"id" json:"id"`
 	PostId     int64      `db:"post_id" json:"post_id"`
-	Url        *string    `db:"url" json:"-"`
+	Url        *string    `db:"url" json:"url"`
 	No         int        `db:"no" json:"no"`
 	CreateTime *time.Time `db:"create_time" json:"create_time"`
 	Enable     int        `db:"enable" json:"-"`
@@ -248,7 +248,7 @@ func (postAttachDao *PostAttachDao) Get(userId int64, postId int64, page *base.P
 		return nil
 	}
 	page.Count = count
-	err = postAttachDao.DB.Select(postAttach, "select user_post_attach.id,user_post_attach.post_id,user_post_attach.url,user_post_attach.no,user_post_attach.create_time from user_post_attach join user_post on user_post.id=user_post_attach.post_id and  user_post.user_id=?  and  user_post_attach.post_id=? and user_post.enable=1 and user_post_attach.enable=1 limit ?,?", userId, postId, page.PageSize*(page.PageNo-1), page.PageSize)
+	err = postAttachDao.DB.Select(postAttach, "select user_post_attach.id,user_post_attach.post_id,store.suffix url,user_post_attach.no,user_post_attach.create_time from user_post_attach join user_post on user_post.id=user_post_attach.post_id and  user_post.user_id=?  and  user_post_attach.post_id=? and user_post.enable=1 and user_post_attach.enable=1  join  store on user_post_attach.url=store.url   limit ?,?", userId, postId, page.PageSize*(page.PageNo-1), page.PageSize)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}

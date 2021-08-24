@@ -77,7 +77,7 @@ func main() {
 	token := &controller.Token{Service: security}
 	tokenHolder := &common.TokenHolder{Name: "token", Helper: tokenHelper}
 	//user
-	userController := &controller.User{Service: security, TokenHolder: tokenHolder}
+	userController := &controller.User{Service: security, TokenHolder: tokenHolder, UserInfoService: userInfo}
 	userName := &controller.Name{TokenHolder: tokenHolder, UserInfo: userInfo}
 	signature := &controller.Signature{TokenHolder: tokenHolder, UserInfo: userInfo}
 	icon := &controller.Icon{TokenHolder: tokenHolder, UserInfo: userInfo, Limit: 300}
